@@ -4,7 +4,16 @@ version = "0.1.0"
 description = "Assistente que responde perguntas de funcionários com base nas políticas oficiais de RH, citando a fonte."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "python-docx>=1.2.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "rotasul_rh"
 
 [dependency-groups]
 dev = [
