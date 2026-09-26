@@ -1,4 +1,4 @@
-# ADR-0003: Leitor próprio de documentos com python-docx e pypdf
+# ADR-0003: Leitor próprio de documentos com python-docx e pdfplumber
 
 - **Status:** aceito
 - **Data:** 2026-09-26
@@ -22,7 +22,7 @@ não misturar públicos, a leitura precisa preservar:
 - Contras: devolve texto corrido; perde os títulos de seção e achata as tabelas, separando cada valor
   do nome da sua coluna. A estrutura teria de ser reconstruída depois, a partir de texto sem marcação.
 
-### Opção 2: Leitor próprio com `python-docx` e `pypdf`
+### Opção 2: Leitor próprio com `python-docx` e uma biblioteca de PDF
 
 - Prós: controle total sobre seções, tabelas e listas; fácil de testar com as políticas reais; o
   resultado pode ser entregue ao LlamaIndex com metadados nas etapas seguintes.
@@ -48,3 +48,28 @@ essa estrutura desde a leitura.
 - Documentos com outra formatação (sem estilos de título, por exemplo) exigem ajuste no leitor; os
   testes com as políticas reais mostram quando isso acontece.
 - O LlamaIndex continua na stack, mas só entra a partir do chunking e da indexação.
+
+## Revisão (2026-09-26): pdfplumber no lugar do pypdf
+
+A primeira versão desta decisão previa o `pypdf`. Ao ler os três PDFs, ele se mostrou insuficiente:
+
+- devolve só o texto, com uma quebra de linha onde a página acaba, e não onde o parágrafo acaba;
+- repete o cabeçalho e o rodapé de cada página no meio do texto;
+- desmonta as tabelas: cada célula vira uma linha solta, e células longas quebram em duas, sem como
+  saber onde uma termina e a outra começa.
+
+O `pdfplumber` informa a posição e a fonte de cada letra e reconhece tabelas pelas bordas. Nos três
+PDFs, todos os títulos de seção estão em negrito, tamanho 13, e todas as tabelas têm bordas, então o
+leitor usa essas marcas:
+
+| Estrutura | Como é reconhecida |
+|---|---|
+| Título da seção | negrito, tamanho 13, começando por "número. " |
+| Parágrafo | linhas a cerca de 4,5 pt uma da outra; entre parágrafos o espaço é de 10,5 pt |
+| Item de lista | linha que começa com o marcador |
+| Tabela | bordas desenhadas (`find_tables`) |
+| Cabeçalho e rodapé | posição: 60 pt do topo ou do pé da página |
+
+Custo: o `pdfplumber` traz dependências maiores (pdfminer.six, Pillow, pypdfium2), mas continua sendo
+Python puro, sem modelos de IA. Um PDF sem títulos em negrito ou com tabelas sem bordas exigiria outra
+regra; os testes com as políticas reais mostram quando isso acontece.
