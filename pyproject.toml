@@ -1,0 +1,23 @@
+[project]
+name = "rotasul-assistente-rh"
+version = "0.1.0"
+description = "Assistente que responde perguntas de funcionários com base nas políticas oficiais de RH, citando a fonte."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

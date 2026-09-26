@@ -1,0 +1,33 @@
+# Segredos
+.env
+.env.*
+!.env.example
+
+# Arquivos de apoio locais (não vão para o repositório)
+CLAUDE.md
+.claude/
+
+# Ambiente virtual
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Caches de ferramentas
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editor e sistema
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store
