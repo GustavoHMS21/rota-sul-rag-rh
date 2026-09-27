@@ -24,3 +24,27 @@ class Secao:
     def fonte(self) -> str:
         """Referência usada na citação da resposta: "POL-RH-003, Férias, seção 5"."""
         return f"{self.codigo}, {self.nome}, seção {self.numero}"
+
+
+@dataclass(frozen=True)
+class Chunk:
+    """Pedaço de uma seção que vira um vetor no banco.
+
+    Normalmente é a seção inteira. Ela só é dividida quando tem parágrafos de públicos diferentes
+    ou quando passa do teto de tokens.
+    """
+
+    id: str  # ex.: "POL-RH-003#6-administrativo"
+    secao: Secao
+    texto: str  # conteúdo do chunk, sem o cabeçalho
+    publicos: frozenset[str]  # a quem a regra se aplica: "administrativo", "operacao", "motorista"
+
+    @property
+    def cabecalho(self) -> str:
+        """Contexto que vai na frente do texto no embedding, para o vetor saber de onde ele vem."""
+        s = self.secao
+        return f"Política de {s.nome} ({s.codigo}) | Seção {s.numero}: {s.titulo}"
+
+    @property
+    def texto_para_embedding(self) -> str:
+        return f"{self.cabecalho}\n{self.texto}"
