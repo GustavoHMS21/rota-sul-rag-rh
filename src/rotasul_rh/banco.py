@@ -25,6 +25,26 @@ CREATE TABLE IF NOT EXISTS chunks (
 -- Impressão digital do texto que gerou o embedding (e do modelo), para a indexação só pedir ao
 -- Ollama os vetores do que mudou. Adicionada depois da criação da tabela, por isso o ALTER.
 ALTER TABLE chunks ADD COLUMN IF NOT EXISTS hash_embedding text;
+
+-- Registro anônimo das perguntas e respostas (ADR-0008): nada identifica quem perguntou
+-- (sem usuário, IP ou navegador). CPF, e-mail e telefone são mascarados antes de gravar, e os
+-- registros são apagados depois do prazo de retenção.
+CREATE TABLE IF NOT EXISTS interacoes (
+    id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    criado_em        timestamptz NOT NULL DEFAULT now(),
+    pergunta         text NOT NULL,
+    publico          text,
+    tipo             text NOT NULL,
+    resposta         text NOT NULL,
+    fontes           text[] NOT NULL,
+    trechos          jsonb NOT NULL,
+    modelo           text NOT NULL,
+    motivo_da_troca  text,
+    milissegundos    integer NOT NULL,
+    avaliacao_util   boolean,
+    avaliada_em      timestamptz
+);
+CREATE INDEX IF NOT EXISTS interacoes_criado_em ON interacoes (criado_em);
 """
 
 

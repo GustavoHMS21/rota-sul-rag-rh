@@ -23,12 +23,19 @@ _TIPOS = {RESPONDIDA, NAO_ENCONTRADO, DADO_PESSOAL}
 
 # Temperatura 0: a mesma pergunta deve ter sempre a mesma resposta (ADR-0007).
 _TEMPERATURA = 0
-# Modelos de raciocínio gastam tokens "pensando" antes de responder; a folga cobre isso.
-_MAX_TOKENS_DE_SAIDA = 2048
+# O Qwen responde com 75 a 300 tokens. O Groq desconta este teto do limite de tokens por minuto
+# antes de responder: com 2048, cada pergunta "ocupava" ~3.300 tokens dos 8.000 por minuto e a
+# segunda ou terceira pergunta seguida recebia 429. Uma resposta maior que o teto sai com o JSON
+# cortado e vira a resposta padrão na verificação (falha segura).
+_MAX_TOKENS_DE_SAIDA = 512
 
 
 class ErroGeracao(RuntimeError):
     pass
+
+
+class ErroLimite(ErroGeracao):
+    """O limite de uso do Groq (tokens por minuto ou requisições por dia) foi atingido."""
 
 
 @dataclass(frozen=True)
@@ -125,7 +132,7 @@ def _perguntar_ao_modelo(mensagens: list[dict], config: Config, tentativas: int)
             f"O modelo {config.groq_model!r} não existe no Groq. Confira o GROQ_MODEL no .env."
         ) from erro
     except groq.RateLimitError as erro:
-        raise ErroGeracao(
+        raise ErroLimite(
             "O limite de uso do Groq foi atingido. Tente de novo em alguns instantes."
         ) from erro
     except groq.APIConnectionError as erro:

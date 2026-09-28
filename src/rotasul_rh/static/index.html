@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assistente de RH | Rota Sul Logística</title>
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>Assistente de Políticas de RH</h1>
+    <p>Rota Sul Logística (empresa fictícia). Respostas com base nas políticas oficiais, sempre com a fonte.</p>
+  </header>
+
+  <form id="formulario" class="cartao" novalidate>
+    <div class="campo">
+      <label for="publico">Onde você trabalha?</label>
+      <select id="publico" name="publico">
+        <option value="">Prefiro não informar</option>
+        <option value="administrativo">Administrativo da matriz (Campinas)</option>
+        <option value="operacao_5x2">CD Jundiaí ou Sumaré, escala 5x2</option>
+        <option value="operacao_6x1">CD Jundiaí ou Sumaré, escala 6x1</option>
+        <option value="motorista">Motorista</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="pergunta">Sua dúvida</label>
+      <textarea id="pergunta" name="pergunta" maxlength="500" required
+        placeholder="Ex.: Posso vender parte das minhas férias?"></textarea>
+    </div>
+
+    <div class="linha">
+      <span class="contador" id="contador" aria-live="polite">0/500</span>
+      <button type="submit" id="enviar">Perguntar</button>
+    </div>
+
+    <p class="aviso">
+      As perguntas são registradas de forma anônima para melhorar o serviço e apagadas depois de
+      180 dias. Não informe dados pessoais, como CPF, telefone ou informações de saúde.
+    </p>
+  </form>
+
+  <p id="status" role="status" aria-live="polite"></p>
+
+  <section id="resultado" class="cartao resposta" hidden aria-live="polite">
+    <div id="texto-resposta"></div>
+    <div id="fontes" class="fontes"></div>
+
+    <div class="avaliacao" id="avaliacao">
+      <span>Esta resposta ajudou?</span>
+      <button type="button" class="secundario" data-util="true" aria-pressed="false">👍 Sim</button>
+      <button type="button" class="secundario" data-util="false" aria-pressed="false">👎 Não</button>
+      <span id="obrigado" class="aviso" hidden>Obrigado!</span>
+    </div>
+
+    <details id="trechos">
+      <summary>Ver trechos das políticas consultados</summary>
+      <div id="lista-trechos"></div>
+    </details>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

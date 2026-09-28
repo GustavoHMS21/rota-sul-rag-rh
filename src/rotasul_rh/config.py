@@ -15,9 +15,15 @@ class Config:
     postgres_password: str
     ollama_base_url: str
     embedding_model: str
+    # Tempo que o Ollama mantém o bge-m3 na memória sem uso (padrão dele: 5 min). "-1" = sempre.
+    ollama_keep_alive: str = "1h"
     # Só a geração usa o Groq; indexar e buscar funcionam sem a chave.
     groq_api_key: str | None = None
     groq_model: str | None = None
+    # Chave da área do RH (/rh). Sem ela, a área fica desativada (ADR-0009).
+    rh_chave_acesso: str | None = None
+    # Dias que as perguntas registradas ficam guardadas antes de serem apagadas (ADR-0008).
+    retencao_dias: int = 180
 
     @property
     def conninfo(self) -> str:
@@ -38,8 +44,11 @@ def carregar_config() -> Config:
         postgres_password=_obrigatoria("POSTGRES_PASSWORD"),
         ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
         embedding_model=os.getenv("EMBEDDING_MODEL", "bge-m3"),
+        ollama_keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "1h"),
         groq_api_key=os.getenv("GROQ_API_KEY") or None,
         groq_model=os.getenv("GROQ_MODEL") or None,
+        rh_chave_acesso=os.getenv("RH_CHAVE_ACESSO") or None,
+        retencao_dias=int(os.getenv("RETENCAO_DIAS", "180")),
     )
 
 

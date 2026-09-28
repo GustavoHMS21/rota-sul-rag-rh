@@ -81,3 +81,20 @@ As escalas 5x2 e 6x1, que dividem o mesmo trecho (ADR-0004), foram separadas cor
 - Modelos são descontinuados: o eval é o que permite trocar de modelo com segurança.
 - A lista de títulos de elegibilidade é fixa; uma política nova com outro título ("Elegibilidade",
   "Público-alvo") precisa ser acrescentada.
+
+## Revisão (2026-09-28): latência no uso real
+
+Com a interface rodando, apareceram duas demoras que o eval não mostrava:
+
+- **Partida a frio do Ollama.** O Ollama tira o bge-m3 da memória depois de 5 minutos sem uso, e a
+  pergunta seguinte esperava de 2,2 a 2,7 s pelo carregamento (contra 0,07 s com o modelo
+  carregado). Correção: a API aquece o modelo em segundo plano ao subir, e cada pedido de embedding
+  informa `keep_alive` (padrão de 1 hora, configurável em `OLLAMA_KEEP_ALIVE`). "Para sempre" (`-1`)
+  foi descartado porque ocuparia cerca de 1,2 GB de RAM mesmo com a API desligada.
+- **Erro 429 do Groq na segunda ou terceira pergunta seguida.** Cada pergunta usa cerca de 1.350
+  tokens, mas o pedido reservava `max_completion_tokens = 2048` (folga pensada para modelos de
+  raciocínio), e o Groq desconta essa reserva do limite de 8.000 tokens por minuto antes de
+  responder. Correção: teto de 512 tokens de saída. A resposta mais longa medida (separação por
+  público) usou 205 tokens. Uma resposta acima do teto sai com o JSON cortado e vira a resposta
+  padrão na verificação (falha segura). Com a correção, 5 perguntas seguidas foram respondidas entre
+  1 e 2 s cada.

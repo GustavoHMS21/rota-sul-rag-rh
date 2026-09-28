@@ -20,7 +20,7 @@ import time
 from pathlib import Path
 
 from rotasul_rh.config import carregar_config
-from rotasul_rh.geracao import RESPONDIDA, ErroGeracao, responder
+from rotasul_rh.geracao import RESPONDIDA, ErroLimite, responder
 
 RAIZ = Path(__file__).parents[2]
 GABARITO = RAIZ / "evals" / "perguntas.json"
@@ -77,8 +77,8 @@ def _responder_esperando_o_limite(pergunta: dict, config):
     for tentativa in range(1, _TENTATIVAS_NO_LIMITE + 1):
         try:
             return responder(pergunta["pergunta"], pergunta["publico"], config, tentativas=5)
-        except ErroGeracao as erro:
-            if "limite" not in str(erro) or tentativa == _TENTATIVAS_NO_LIMITE:
+        except ErroLimite:
+            if tentativa == _TENTATIVAS_NO_LIMITE:
                 raise
             print(
                 f"    limite do Groq atingido; esperando {_ESPERA_NO_LIMITE_SEGUNDOS} s", flush=True

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Área do RH | Rota Sul Logística</title>
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+<main class="largo">
+  <header>
+    <h1>Área do RH</h1>
+    <p>Perguntas registradas de forma anônima. Nada identifica quem perguntou.</p>
+  </header>
+
+  <form id="entrada" class="cartao">
+    <div class="campo">
+      <label for="chave">Chave de acesso do RH</label>
+      <input id="chave" type="password" autocomplete="current-password" required>
+    </div>
+    <div class="linha">
+      <span class="aviso">A chave fica só nesta aba do navegador e some quando ela é fechada.</span>
+      <button type="submit">Entrar</button>
+    </div>
+  </form>
+
+  <p id="status" role="status" aria-live="polite"></p>
+
+  <section id="painel" hidden>
+    <div class="numeros" id="numeros"></div>
+
+    <div class="cartao">
+      <div class="filtros">
+        <div class="campo">
+          <label for="tipo">Tipo de resposta</label>
+          <select id="tipo">
+            <option value="">Todas</option>
+            <option value="respondida">Respondidas</option>
+            <option value="nao_encontrado">Não encontrado nas políticas</option>
+            <option value="dado_pessoal">Dado pessoal (recusada)</option>
+          </select>
+        </div>
+        <button type="button" class="secundario" id="atualizar">Atualizar</button>
+        <button type="button" class="secundario" id="sair">Sair</button>
+      </div>
+
+      <div class="tabela-rolagem">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Quando</th>
+              <th scope="col">Público</th>
+              <th scope="col">Pergunta</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Resposta</th>
+              <th scope="col">Fontes</th>
+              <th scope="col">Avaliação</th>
+            </tr>
+          </thead>
+          <tbody id="linhas"></tbody>
+        </table>
+      </div>
+      <p class="aviso" id="vazio" hidden>Nenhuma pergunta registrada.</p>
+    </div>
+  </section>
+</main>
+<script src="/static/rh.js"></script>
+</body>
+</html>

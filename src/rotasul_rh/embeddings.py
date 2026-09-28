@@ -18,11 +18,20 @@ def gerar_embeddings(textos: list[str], config: Config) -> list[list[float]]:
 
     `truncate: False` faz o Ollama recusar um texto maior que o contexto do modelo, em vez de
     cortar o final em silêncio (e deixar esse final fora do vetor).
+
+    `keep_alive` diz ao Ollama por quanto tempo manter o modelo na memória depois do pedido. O
+    padrão dele é 5 minutos; depois disso, a próxima pergunta espera cerca de 2,5 s para o modelo
+    ser carregado de novo (contra 0,07 s com ele já carregado).
     """
     try:
         resposta = httpx.post(
             f"{config.ollama_base_url}/api/embed",
-            json={"model": config.embedding_model, "input": textos, "truncate": False},
+            json={
+                "model": config.embedding_model,
+                "input": textos,
+                "truncate": False,
+                "keep_alive": config.ollama_keep_alive,
+            },
             timeout=_TIMEOUT_SEGUNDOS,
         )
     except httpx.ConnectError as erro:
@@ -41,3 +50,8 @@ def gerar_embeddings(textos: list[str], config: Config) -> list[list[float]]:
 
 def gerar_embedding(texto: str, config: Config) -> list[float]:
     return gerar_embeddings([texto], config)[0]
+
+
+def aquecer_modelo(config: Config) -> None:
+    """Carrega o modelo na memória do Ollama antes da primeira pergunta de verdade."""
+    gerar_embedding("aquecimento", config)
