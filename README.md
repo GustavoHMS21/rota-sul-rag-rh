@@ -113,7 +113,7 @@ home" answer above, the vacation question with a described situation, which was 
 personal data, and a distribution center employee who asked the assistant to "pretend I work at
 head office" and got an answer that played along (and described the wrong benefit).
 
-A question takes about 1 to 2 seconds on a laptop CPU. There are 308 unit tests and 10 integration
+A question takes about 1 to 2 seconds on a laptop CPU. There are 315 unit tests and 10 integration
 tests.
 
 One honest caveat: the check for required facts compares text, so it marks correct answers with
@@ -137,6 +137,7 @@ numbers behind it (written in Portuguese).
 | [0008](docs/adr/0008-interface-e-registro-anonimo.md) | Anonymous question log with masking and 180-day retention |
 | [0009](docs/adr/0009-autenticacao-e-area-do-rh.md) | No login for employees, access key for the HR page |
 | [0010](docs/adr/0010-protecao-contra-manipulacao.md) | Prompt injection cases in the evaluation set |
+| [0011](docs/adr/0011-logs-e-observabilidade.md) | Structured logs with a per-request code, never the question text |
 
 ## Stack
 
@@ -173,6 +174,17 @@ The first run downloads the model and indexes the policies. When it's done, open
 - http://localhost:8000/docs for the API documentation
 
 If port 8000 is taken, set `APP_PORT` in `.env`.
+
+### Logs
+
+Each request gets a short code that shows up in every log line for that request, in the
+`X-Request-ID` header and in error messages ("tell HR the code a1b2c3d4"). Logs go to the terminal
+and, one JSON object per line, to `logs/app.log`, kept for 14 days. They record timings, token
+counts, retries and errors, but never the text of a question or answer.
+
+```powershell
+Select-String -Path logs\*.log -Pattern "a1b2c3d4"   # everything about one request
+```
 
 ### For development
 
@@ -215,6 +227,8 @@ The full list is in [`docs/melhorias.md`](docs/melhorias.md). The main ones:
 - Very short questions about a single row of a large table can miss. "Quantos dias de
   licença-paternidade?" gets the "not found" message, while the longer version of the same question
   is answered. Hybrid search (vector plus keyword) should fix it.
+- On Groq's free tier (8,000 tokens per minute), a burst of questions makes some people wait. In a
+  test with 6 questions at once, three waited 25 to 31 seconds while the client retried.
 - The masking catches ID numbers, emails and phone numbers, but not names or health conditions
   written out in words.
 - Two open questions for the business side: whether drivers follow the distribution center rules

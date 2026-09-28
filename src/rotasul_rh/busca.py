@@ -4,12 +4,16 @@ Uso: uv run python -m rotasul_rh.busca "Posso vender minhas férias?" --publico 
 """
 
 import argparse
+import logging
+import time
 from dataclasses import dataclass
 
 from rotasul_rh.banco import conectar
 from rotasul_rh.config import Config, carregar_config
 from rotasul_rh.embeddings import gerar_embedding
 from rotasul_rh.publico import publico_do_usuario
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -82,7 +86,9 @@ def buscar_contexto(
     encontrada (expansão de contexto, ADR-0007). As seções de elegibilidade vêm primeiro, para o
     modelo ler quem tem direito antes de ler como a regra funciona.
     """
+    inicio = time.perf_counter()
     vetor = gerar_embedding(pergunta, config)
+    embedding = time.perf_counter() - inicio
     publico_dos_chunks = publico_do_usuario(publico)
     with conectar(config) as conexao:
         encontrados = [
@@ -106,7 +112,18 @@ def buscar_contexto(
         ]
 
     ids_de_elegibilidade = {r.id for r in elegibilidade}
-    return elegibilidade + [r for r in encontrados if r.id not in ids_de_elegibilidade]
+    trechos = elegibilidade + [r for r in encontrados if r.id not in ids_de_elegibilidade]
+    log.info(
+        "busca concluída",
+        extra={
+            "evento": "busca",
+            "segundos_embedding": round(embedding, 3),
+            "segundos_banco": round(time.perf_counter() - inicio - embedding, 3),
+            "trechos": len(trechos),
+            "similaridade_maxima": round(max((r.similaridade for r in encontrados), default=0), 3),
+        },
+    )
+    return trechos
 
 
 if __name__ == "__main__":

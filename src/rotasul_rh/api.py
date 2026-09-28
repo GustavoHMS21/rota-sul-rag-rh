@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 import httpx
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
@@ -29,6 +29,7 @@ from rotasul_rh.banco import conectar
 from rotasul_rh.config import Config, carregar_config
 from rotasul_rh.embeddings import ErroEmbedding, aquecer_modelo
 from rotasul_rh.geracao import ErroGeracao, ErroLimite, responder
+from rotasul_rh.logs import configurar_logs, id_da_requisicao, novo_id_de_requisicao
 
 log = logging.getLogger(__name__)
 ESTATICOS = Path(__file__).parent / "static"
@@ -39,6 +40,8 @@ async def ciclo_de_vida(_app: FastAPI):
     """Na subida, carrega o bge-m3 no Ollama em segundo plano: sem isso, a primeira pergunta
     espera cerca de 2,5 s pelo carregamento do modelo. Em segundo plano para não atrasar a subida;
     se o Ollama estiver fora, a primeira pergunta e o /api/saude mostram o problema."""
+    configurar_logs()
+    log.info("servidor iniciado", extra={"evento": "inicio"})
     threading.Thread(target=_aquecer, daemon=True).start()
     yield
 
@@ -60,6 +63,39 @@ app = FastAPI(
     lifespan=ciclo_de_vida,
 )
 app.mount("/static", StaticFiles(directory=ESTATICOS), name="static")
+
+
+@app.middleware("http")
+async def acompanhar_requisicao(request: Request, call_next):
+    """Dá um código a cada requisição (logs, cabeçalho X-Request-ID e mensagens de erro) e
+    registra o resultado das chamadas à API. As páginas e arquivos estáticos não entram no log."""
+    codigo = novo_id_de_requisicao()
+    inicio = time.perf_counter()
+    try:
+        resposta = await call_next(request)
+    except Exception:
+        log.exception("erro não tratado", extra={"evento": "erro", "rota": request.url.path})
+        resposta = JSONResponse(
+            {"detail": _com_codigo("Algo deu errado no assistente.")}, status_code=500
+        )
+    resposta.headers["X-Request-ID"] = codigo
+    if request.url.path.startswith("/api/"):
+        log.info(
+            "requisição concluída",
+            extra={
+                "evento": "requisicao",
+                "metodo": request.method,
+                "rota": request.url.path,
+                "status": resposta.status_code,
+                "segundos": round(time.perf_counter() - inicio, 3),
+            },
+        )
+    return resposta
+
+
+def _com_codigo(mensagem: str) -> str:
+    """Mensagem de erro para o funcionário, com o código que liga a reclamação ao log."""
+    return f"{mensagem} Se falar com o RH, informe o código {id_da_requisicao()}."
 
 
 @lru_cache
@@ -111,22 +147,43 @@ def perguntar(entrada: PerguntaEntrada, config: ConfigDep) -> RespostaSaida:
     if len(pergunta) < 3:
         raise HTTPException(422, "Escreva uma pergunta.")
 
+    # Só metadados: o texto da pergunta nunca vai para o log (LGPD, ADR-0011).
+    log.info(
+        "pergunta recebida",
+        extra={"evento": "pergunta", "publico": entrada.publico, "caracteres": len(pergunta)},
+    )
     inicio = time.perf_counter()
     try:
         resposta = responder(pergunta, entrada.publico, config)
     except ErroLimite as erro:
-        raise HTTPException(429, "Muitas perguntas agora. Tente em alguns instantes.") from erro
+        log.warning("limite do Groq esgotado", extra={"evento": "falha", "motivo": str(erro)})
+        raise HTTPException(
+            429, _com_codigo("Muitas perguntas agora. Tente em alguns instantes.")
+        ) from erro
     except (ErroGeracao, ErroEmbedding, RuntimeError) as erro:
-        log.exception("falha ao responder")
-        raise HTTPException(503, "O assistente está indisponível no momento.") from erro
+        log.exception("falha ao responder", extra={"evento": "falha"})
+        raise HTTPException(
+            503, _com_codigo("O assistente está indisponível no momento.")
+        ) from erro
     milissegundos = round((time.perf_counter() - inicio) * 1000)
 
     # O registro não pode derrubar o atendimento: se falhar, a resposta sai mesmo assim.
     try:
         id_ = registro.registrar(pergunta, entrada.publico, resposta, milissegundos, config)
     except Exception:
-        log.exception("falha ao registrar a interação")
+        log.exception("falha ao registrar a interação", extra={"evento": "falha"})
         id_ = None
+
+    log.info(
+        "resposta entregue",
+        extra={
+            "evento": "resposta",
+            "tipo": resposta.tipo,
+            "fontes": resposta.ids_das_fontes,
+            "interacao": str(id_) if id_ else None,
+            "segundos": round(milissegundos / 1000, 3),
+        },
+    )
 
     return RespostaSaida(
         id=id_,
@@ -188,6 +245,8 @@ def exigir_chave_do_rh(
         raise HTTPException(503, "Área do RH desativada: defina RH_CHAVE_ACESSO no .env.")
     # compare_digest compara em tempo constante: o tempo de resposta não dá pistas da chave.
     if not x_chave_rh or not secrets.compare_digest(x_chave_rh, config.rh_chave_acesso):
+        # Várias tentativas seguidas podem ser alguém tentando adivinhar a chave.
+        log.warning("chave do RH inválida", extra={"evento": "acesso_negado"})
         raise HTTPException(401, "Chave do RH inválida.")
 
 

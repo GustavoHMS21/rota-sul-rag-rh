@@ -36,6 +36,12 @@ Pontos conhecidos que não bloqueiam a v1. Cada um diz de onde veio e como seria
 
 ## Qualidade e operação
 
+- **Capacidade no plano gratuito do Groq:** o limite de 8.000 tokens por minuto comporta umas 4 ou
+  5 perguntas por minuto. Numa rajada de 6 perguntas simultâneas, três pessoas esperaram de 25 a 31
+  segundos (medido pelos logs, ADR-0011). Caminhos: plano pago, fila com aviso de espera na tela,
+  cache para perguntas repetidas ou prompt menor. Origem: ADR-0011.
+- **Métricas e alertas** (erros por hora, tempo médio por dia) sobre os logs em JSON, com
+  ferramentas como Prometheus e Grafana. Origem: ADR-0011.
 - **CI no GitHub** (testes rápidos e ruff a cada push).
 - **Máscara de dados pessoais:** não reconhece nomes e doenças escritos por extenso; reconhecimento
   de entidades (NER) seria o próximo passo. Origem: ADR-0008.

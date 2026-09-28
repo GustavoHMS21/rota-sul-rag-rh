@@ -8,6 +8,8 @@ dos trechos buscados, venha sem fonte ou em formato inválido é trocada pela re
 
 import argparse
 import json
+import logging
+import time
 from dataclasses import dataclass, field
 
 import groq
@@ -15,6 +17,8 @@ import groq
 from rotasul_rh.busca import Resultado, buscar_contexto
 from rotasul_rh.config import Config, carregar_config
 from rotasul_rh.prompt import RESPOSTA_PADRAO, montar_mensagens
+
+log = logging.getLogger(__name__)
 
 RESPONDIDA = "respondida"
 NAO_ENCONTRADO = "nao_encontrado"
@@ -55,7 +59,14 @@ def responder(pergunta: str, publico: str | None, config: Config, tentativas: in
     conteudo = _perguntar_ao_modelo(
         montar_mensagens(pergunta, publico, trechos), config, tentativas
     )
-    return interpretar(conteudo, trechos)
+    resposta = interpretar(conteudo, trechos)
+    if resposta.motivo_da_troca:
+        # Pode ser só um modelo mal comportado, ou o começo de um problema: vale olhar.
+        log.warning(
+            "resposta do modelo trocada pela padrão",
+            extra={"evento": "verificacao", "motivo": resposta.motivo_da_troca},
+        )
+    return resposta
 
 
 def interpretar(conteudo: str, trechos: list[Resultado]) -> Resposta:
@@ -117,6 +128,7 @@ def _perguntar_ao_modelo(mensagens: list[dict], config: Config, tentativas: int)
     # max_retries: o SDK repete sozinho em erros temporários, respeitando o tempo de espera que o
     # Groq pede quando o limite de tokens por minuto é atingido.
     cliente = groq.Groq(api_key=config.groq_api_key, max_retries=tentativas)
+    inicio = time.perf_counter()
     try:
         conclusao = cliente.chat.completions.create(
             model=config.groq_model,
@@ -140,6 +152,18 @@ def _perguntar_ao_modelo(mensagens: list[dict], config: Config, tentativas: int)
     except groq.APIStatusError as erro:
         raise ErroGeracao(f"O Groq devolveu um erro ({erro.status_code}).") from erro
 
+    uso = conclusao.usage
+    log.info(
+        "modelo respondeu",
+        extra={
+            "evento": "groq",
+            "segundos": round(time.perf_counter() - inicio, 3),
+            "modelo": config.groq_model,
+            "tokens_entrada": getattr(uso, "prompt_tokens", None),
+            "tokens_saida": getattr(uso, "completion_tokens", None),
+            "fim": conclusao.choices[0].finish_reason,
+        },
+    )
     return conclusao.choices[0].message.content or ""
 
 
