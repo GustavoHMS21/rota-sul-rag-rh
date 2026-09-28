@@ -15,6 +15,9 @@ class Config:
     postgres_password: str
     ollama_base_url: str
     embedding_model: str
+    # Só a geração usa o Groq; indexar e buscar funcionam sem a chave.
+    groq_api_key: str | None = None
+    groq_model: str | None = None
 
     @property
     def conninfo(self) -> str:
@@ -35,6 +38,8 @@ def carregar_config() -> Config:
         postgres_password=_obrigatoria("POSTGRES_PASSWORD"),
         ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
         embedding_model=os.getenv("EMBEDDING_MODEL", "bge-m3"),
+        groq_api_key=os.getenv("GROQ_API_KEY") or None,
+        groq_model=os.getenv("GROQ_MODEL") or None,
     )
 
 

@@ -6,7 +6,7 @@ Rodar com: uv run pytest -m integracao
 import pytest
 
 from rotasul_rh.banco import conectar
-from rotasul_rh.busca import buscar
+from rotasul_rh.busca import buscar, buscar_contexto
 from rotasul_rh.chunking import gerar_chunks
 from rotasul_rh.config import carregar_config
 from rotasul_rh.indexacao import indexar
@@ -78,3 +78,21 @@ def test_escala_da_tela_vira_filtro_da_operacao(config, indexado):
 
     assert "POL-RH-003#6-operacao" in ids
     assert "POL-RH-003#6-administrativo" not in ids
+
+
+def test_contexto_inclui_a_elegibilidade_da_politica_primeiro(config, indexado):
+    # Sozinha, a busca não traz "Quem pode" para esta pergunta curta.
+    assert "POL-RH-005#2" not in [
+        r.id for r in buscar("Posso fazer home office?", "operacao", config)
+    ]
+
+    ids = [r.id for r in buscar_contexto("Posso fazer home office?", "operacao", config)]
+
+    assert ids[0] == "POL-RH-005#2"
+    assert len(ids) == len(set(ids))  # a seção de elegibilidade não aparece duas vezes
+
+
+def test_politica_sem_secao_de_elegibilidade_nao_muda(config, indexado):
+    pergunta = "Qual o valor do vale-alimentação?"
+
+    assert buscar_contexto(pergunta, None, config) == buscar(pergunta, None, config)
