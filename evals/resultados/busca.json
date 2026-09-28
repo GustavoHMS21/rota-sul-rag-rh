@@ -1,0 +1,1109 @@
+{
+  "k": 3,
+  "resumo": {
+    "perguntas_com_resposta": 39,
+    "hit@1": 0.872,
+    "hit@3": 0.974,
+    "mrr": 0.919,
+    "vazamentos_de_publico": 3
+  },
+  "similaridade_do_1o": {
+    "com_resposta": {
+      "min": 0.438,
+      "mediana": 0.691,
+      "max": 0.786
+    },
+    "sem_resposta": {
+      "min": 0.438,
+      "mediana": 0.58,
+      "max": 0.689
+    }
+  },
+  "casos": [
+    {
+      "id": "ferias-fracionamento",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#5"
+      ],
+      "recuperados": [
+        "POL-RH-003#5",
+        "POL-RH-003#8",
+        "POL-RH-003#3"
+      ],
+      "similaridades": [
+        0.736,
+        0.611,
+        0.553
+      ],
+      "similaridade_1o": 0.736,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "ferias-pagamento",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#7"
+      ],
+      "recuperados": [
+        "POL-RH-003#7",
+        "POL-RH-003#6-geral",
+        "POL-RH-003#8"
+      ],
+      "similaridades": [
+        0.726,
+        0.669,
+        0.666
+      ],
+      "similaridade_1o": 0.726,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "ferias-abono",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#8"
+      ],
+      "recuperados": [
+        "POL-RH-003#8",
+        "POL-RH-003#5",
+        "POL-RH-003#4"
+      ],
+      "similaridades": [
+        0.637,
+        0.558,
+        0.55
+      ],
+      "similaridade_1o": 0.637,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "ferias-estagiario",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#10"
+      ],
+      "recuperados": [
+        "POL-RH-003#10",
+        "POL-RH-003#4",
+        "POL-RH-003#3"
+      ],
+      "similaridades": [
+        0.758,
+        0.604,
+        0.6
+      ],
+      "similaridade_1o": 0.758,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "ferias-faltas-tabela",
+      "tipo": "tabela",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#3"
+      ],
+      "recuperados": [
+        "POL-RH-003#3",
+        "POL-RH-008#5",
+        "POL-RH-003#5"
+      ],
+      "similaridades": [
+        0.704,
+        0.68,
+        0.599
+      ],
+      "similaridade_1o": 0.704,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "ferias-falta-com-atestado",
+      "tipo": "multi_politica",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#3"
+      ],
+      "recuperados": [
+        "POL-RH-008#5",
+        "POL-RH-008#2",
+        "POL-RH-003#3"
+      ],
+      "similaridades": [
+        0.6,
+        0.558,
+        0.544
+      ],
+      "similaridade_1o": 0.6,
+      "posicao": 3,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "atestado-prazo",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-008#2"
+      ],
+      "recuperados": [
+        "POL-RH-008#2",
+        "POL-RH-008#3",
+        "POL-RH-008#7"
+      ],
+      "similaridades": [
+        0.701,
+        0.54,
+        0.524
+      ],
+      "similaridade_1o": 0.701,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "atestado-whatsapp",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-008#2"
+      ],
+      "recuperados": [
+        "POL-RH-008#2",
+        "POL-RH-008#7",
+        "POL-RH-010#3"
+      ],
+      "similaridades": [
+        0.659,
+        0.531,
+        0.482
+      ],
+      "similaridade_1o": 0.659,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "faltas-casamento",
+      "tipo": "tabela",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-008#4"
+      ],
+      "recuperados": [
+        "POL-RH-008#4",
+        "POL-RH-008#5",
+        "POL-RH-003#3"
+      ],
+      "similaridades": [
+        0.718,
+        0.61,
+        0.591
+      ],
+      "similaridade_1o": 0.718,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "faltas-licenca-paternidade",
+      "tipo": "tabela",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-008#4"
+      ],
+      "recuperados": [
+        "POL-RH-003#3",
+        "POL-RH-003#6-administrativo",
+        "POL-RH-003#5"
+      ],
+      "similaridades": [
+        0.557,
+        0.525,
+        0.523
+      ],
+      "similaridade_1o": 0.557,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "atrasos-tolerancia",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-008#6"
+      ],
+      "recuperados": [
+        "POL-RH-008#6",
+        "POL-RH-004#3",
+        "POL-RH-004#7"
+      ],
+      "similaridades": [
+        0.75,
+        0.53,
+        0.518
+      ],
+      "similaridade_1o": 0.75,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "beneficios-vale-alimentacao",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-006#3"
+      ],
+      "recuperados": [
+        "POL-RH-006#3",
+        "POL-RH-006#2-administrativo",
+        "POL-RH-006#2-operacao"
+      ],
+      "similaridades": [
+        0.65,
+        0.613,
+        0.547
+      ],
+      "similaridade_1o": 0.65,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "beneficios-dependente-saude",
+      "tipo": "tabela",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-006#8"
+      ],
+      "recuperados": [
+        "POL-RH-006#8",
+        "POL-RH-006#4",
+        "POL-RH-006#5"
+      ],
+      "similaridades": [
+        0.68,
+        0.608,
+        0.556
+      ],
+      "similaridade_1o": 0.68,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "beneficios-odonto-filho-universitario",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-006#5"
+      ],
+      "recuperados": [
+        "POL-RH-006#5",
+        "POL-RH-006#8",
+        "POL-RH-006#4"
+      ],
+      "similaridades": [
+        0.582,
+        0.47,
+        0.419
+      ],
+      "similaridade_1o": 0.582,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "beneficios-inclusao-carencia",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-006#6"
+      ],
+      "recuperados": [
+        "POL-RH-006#6",
+        "POL-RH-008#4",
+        "POL-RH-006#5"
+      ],
+      "similaridades": [
+        0.61,
+        0.509,
+        0.503
+      ],
+      "similaridade_1o": 0.61,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "beneficios-seguro-vida",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-006#7"
+      ],
+      "recuperados": [
+        "POL-RH-006#7",
+        "POL-RH-006#8",
+        "POL-RH-006#4"
+      ],
+      "similaridades": [
+        0.583,
+        0.455,
+        0.436
+      ],
+      "similaridade_1o": 0.583,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "adiantamento-quinzenal",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-010#2"
+      ],
+      "recuperados": [
+        "POL-RH-010#2",
+        "POL-RH-010#3",
+        "POL-RH-010#4"
+      ],
+      "similaridades": [
+        0.695,
+        0.634,
+        0.585
+      ],
+      "similaridade_1o": 0.695,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "adiantamento-emergencial",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-010#3"
+      ],
+      "recuperados": [
+        "POL-RH-010#3",
+        "POL-RH-010#4",
+        "POL-RH-010#2"
+      ],
+      "similaridades": [
+        0.742,
+        0.666,
+        0.613
+      ],
+      "similaridade_1o": 0.742,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "adiantamento-aviso-previo",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-010#4"
+      ],
+      "recuperados": [
+        "POL-RH-010#3",
+        "POL-RH-010#4",
+        "POL-RH-010#1"
+      ],
+      "similaridades": [
+        0.73,
+        0.717,
+        0.638
+      ],
+      "similaridade_1o": 0.73,
+      "posicao": 2,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "uniforme-kit-epi",
+      "tipo": "tabela",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-009#3"
+      ],
+      "recuperados": [
+        "POL-RH-009#3",
+        "POL-RH-009#4",
+        "POL-RH-006#6"
+      ],
+      "similaridades": [
+        0.558,
+        0.541,
+        0.519
+      ],
+      "similaridade_1o": 0.558,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "uniforme-perda",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-009#5"
+      ],
+      "recuperados": [
+        "POL-RH-009#5",
+        "POL-RH-009#6",
+        "POL-RH-009#4"
+      ],
+      "similaridades": [
+        0.628,
+        0.597,
+        0.512
+      ],
+      "similaridade_1o": 0.628,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "epi-troca-gratuita",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-009#4"
+      ],
+      "recuperados": [
+        "POL-RH-009#5",
+        "POL-RH-009#4",
+        "POL-RH-004#7"
+      ],
+      "similaridades": [
+        0.438,
+        0.437,
+        0.406
+      ],
+      "similaridade_1o": 0.438,
+      "posicao": 2,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "home-office-auxilio",
+      "tipo": "direta",
+      "publico": "administrativo",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-005#6"
+      ],
+      "recuperados": [
+        "POL-RH-005#6",
+        "POL-RH-005#8",
+        "POL-RH-005#3"
+      ],
+      "similaridades": [
+        0.718,
+        0.527,
+        0.514
+      ],
+      "similaridade_1o": 0.718,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "home-office-outra-cidade",
+      "tipo": "direta",
+      "publico": "administrativo",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-005#4"
+      ],
+      "recuperados": [
+        "POL-RH-005#4",
+        "POL-RH-003#2",
+        "POL-RH-005#2"
+      ],
+      "similaridades": [
+        0.713,
+        0.537,
+        0.536
+      ],
+      "similaridade_1o": 0.713,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "home-office-exterior",
+      "tipo": "direta",
+      "publico": "administrativo",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-005#4"
+      ],
+      "recuperados": [
+        "POL-RH-005#4",
+        "POL-RH-005#3",
+        "POL-RH-005#1"
+      ],
+      "similaridades": [
+        0.677,
+        0.567,
+        0.529
+      ],
+      "similaridade_1o": 0.677,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "home-office-regra-substituida",
+      "tipo": "regra_substituida",
+      "publico": "administrativo",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-005#1",
+        "POL-RH-005#3"
+      ],
+      "recuperados": [
+        "POL-RH-005#3",
+        "POL-RH-005#1",
+        "POL-RH-005#6"
+      ],
+      "similaridades": [
+        0.709,
+        0.651,
+        0.585
+      ],
+      "similaridade_1o": 0.709,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "banco-horas-desligamento",
+      "tipo": "direta",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-004#8"
+      ],
+      "recuperados": [
+        "POL-RH-004#4",
+        "POL-RH-004#8",
+        "POL-RH-004#5"
+      ],
+      "similaridades": [
+        0.646,
+        0.642,
+        0.606
+      ],
+      "similaridade_1o": 0.646,
+      "posicao": 2,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "publico-ferias-administrativo",
+      "tipo": "publico",
+      "publico": "administrativo",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#6"
+      ],
+      "recuperados": [
+        "POL-RH-003#6-administrativo",
+        "POL-RH-003#9",
+        "POL-RH-003#8"
+      ],
+      "similaridades": [
+        0.754,
+        0.627,
+        0.606
+      ],
+      "similaridade_1o": 0.754,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "publico-ferias-operacao",
+      "tipo": "publico",
+      "publico": "operacao",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#6"
+      ],
+      "recuperados": [
+        "POL-RH-003#6-operacao",
+        "POL-RH-003#9",
+        "POL-RH-003#2"
+      ],
+      "similaridades": [
+        0.661,
+        0.597,
+        0.574
+      ],
+      "similaridade_1o": 0.661,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "publico-banco-sabado-5x2",
+      "tipo": "publico",
+      "publico": "operacao_5x2",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-004#5"
+      ],
+      "recuperados": [
+        "POL-RH-004#5",
+        "POL-RH-004#7",
+        "POL-RH-004#1"
+      ],
+      "similaridades": [
+        0.786,
+        0.598,
+        0.593
+      ],
+      "similaridade_1o": 0.786,
+      "posicao": 1,
+      "proibidos_visiveis": [
+        "Sábado é dia normal de trabalho"
+      ]
+    },
+    {
+      "id": "publico-banco-sabado-6x1",
+      "tipo": "publico",
+      "publico": "operacao_6x1",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-004#5"
+      ],
+      "recuperados": [
+        "POL-RH-004#5",
+        "POL-RH-004#7",
+        "POL-RH-004#1"
+      ],
+      "similaridades": [
+        0.786,
+        0.607,
+        0.581
+      ],
+      "similaridade_1o": 0.786,
+      "posicao": 1,
+      "proibidos_visiveis": [
+        "1 para 1,5"
+      ]
+    },
+    {
+      "id": "publico-banco-prazo-administrativo",
+      "tipo": "publico",
+      "publico": "administrativo",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-004#4"
+      ],
+      "recuperados": [
+        "POL-RH-004#4",
+        "POL-RH-004#7",
+        "POL-RH-004#3"
+      ],
+      "similaridades": [
+        0.699,
+        0.642,
+        0.613
+      ],
+      "similaridade_1o": 0.699,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "publico-banco-prazo-operacao",
+      "tipo": "publico",
+      "publico": "operacao",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-004#5"
+      ],
+      "recuperados": [
+        "POL-RH-004#5",
+        "POL-RH-004#7",
+        "POL-RH-003#6-operacao"
+      ],
+      "similaridades": [
+        0.668,
+        0.61,
+        0.586
+      ],
+      "similaridade_1o": 0.668,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "publico-banco-motorista",
+      "tipo": "publico",
+      "publico": "motorista",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-004#6"
+      ],
+      "recuperados": [
+        "POL-RH-004#6",
+        "POL-RH-004#3",
+        "POL-RH-004#1"
+      ],
+      "similaridades": [
+        0.681,
+        0.646,
+        0.616
+      ],
+      "similaridade_1o": 0.681,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "publico-home-office-operacao",
+      "tipo": "publico",
+      "publico": "operacao",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-005#2"
+      ],
+      "recuperados": [
+        "POL-RH-005#2",
+        "POL-RH-005#3",
+        "POL-RH-005#1"
+      ],
+      "similaridades": [
+        0.576,
+        0.546,
+        0.52
+      ],
+      "similaridade_1o": 0.576,
+      "posicao": 1,
+      "proibidos_visiveis": [
+        "Até 2 dias por semana em home office"
+      ]
+    },
+    {
+      "id": "publico-vale-refeicao-operacao",
+      "tipo": "publico",
+      "publico": "operacao",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-006#2"
+      ],
+      "recuperados": [
+        "POL-RH-006#2-operacao",
+        "POL-RH-006#3",
+        "POL-RH-004#5"
+      ],
+      "similaridades": [
+        0.764,
+        0.653,
+        0.596
+      ],
+      "similaridade_1o": 0.764,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "publico-uniforme-administrativo",
+      "tipo": "publico",
+      "publico": "administrativo",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-009#2"
+      ],
+      "recuperados": [
+        "POL-RH-009#2",
+        "POL-RH-009#5",
+        "POL-RH-009#3"
+      ],
+      "similaridades": [
+        0.691,
+        0.62,
+        0.569
+      ],
+      "similaridade_1o": 0.691,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "publico-ambiguo-pedir-ferias",
+      "tipo": "publico_ambiguo",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#6"
+      ],
+      "recuperados": [
+        "POL-RH-003#6-administrativo",
+        "POL-RH-003#6-geral",
+        "POL-RH-003#8"
+      ],
+      "similaridades": [
+        0.68,
+        0.657,
+        0.648
+      ],
+      "similaridade_1o": 0.68,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "publico-ambiguo-ferias-coletivas",
+      "tipo": "publico_ambiguo",
+      "publico": null,
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-003#9"
+      ],
+      "recuperados": [
+        "POL-RH-003#9",
+        "POL-RH-003#4",
+        "POL-RH-003#6-operacao"
+      ],
+      "similaridades": [
+        0.697,
+        0.565,
+        0.555
+      ],
+      "similaridade_1o": 0.697,
+      "posicao": 1,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "dado-pessoal-saldo-ferias",
+      "tipo": "dado_pessoal",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-003#3",
+        "POL-RH-003#11",
+        "POL-RH-003#8"
+      ],
+      "similaridades": [
+        0.646,
+        0.644,
+        0.636
+      ],
+      "similaridade_1o": 0.646,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "dado-pessoal-vencimento-ferias",
+      "tipo": "dado_pessoal",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-003#4",
+        "POL-RH-003#11",
+        "POL-RH-003#3"
+      ],
+      "similaridades": [
+        0.66,
+        0.641,
+        0.635
+      ],
+      "similaridade_1o": 0.66,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "dado-pessoal-saldo-banco",
+      "tipo": "dado_pessoal",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-004#9",
+        "POL-RH-004#4",
+        "POL-RH-004#3"
+      ],
+      "similaridades": [
+        0.656,
+        0.649,
+        0.633
+      ],
+      "similaridade_1o": 0.656,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "dado-pessoal-holerite",
+      "tipo": "dado_pessoal",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-004#9",
+        "POL-RH-006#3",
+        "POL-RH-006#2-administrativo"
+      ],
+      "similaridades": [
+        0.609,
+        0.501,
+        0.489
+      ],
+      "similaridade_1o": 0.609,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "dado-pessoal-valor-adiantamento",
+      "tipo": "dado_pessoal",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-010#2",
+        "POL-RH-010#3",
+        "POL-RH-010#1"
+      ],
+      "similaridades": [
+        0.689,
+        0.608,
+        0.565
+      ],
+      "similaridade_1o": 0.689,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "fora-viagens",
+      "tipo": "fora_das_politicas",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-003#8",
+        "POL-RH-003#7",
+        "POL-RH-004#4"
+      ],
+      "similaridades": [
+        0.53,
+        0.53,
+        0.514
+      ],
+      "similaridade_1o": 0.53,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "fora-vale-transporte",
+      "tipo": "fora_das_politicas",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-006#3",
+        "POL-RH-006#2-administrativo",
+        "POL-RH-006#8"
+      ],
+      "similaridades": [
+        0.58,
+        0.552,
+        0.509
+      ],
+      "similaridade_1o": 0.58,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "fora-plr",
+      "tipo": "fora_das_politicas",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-003#7",
+        "POL-RH-003#4",
+        "POL-RH-010#3"
+      ],
+      "similaridades": [
+        0.556,
+        0.533,
+        0.532
+      ],
+      "similaridade_1o": 0.556,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "fora-jornada-motoristas",
+      "tipo": "documento_ausente",
+      "publico": "motorista",
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-004#6",
+        "POL-RH-004#7",
+        "POL-RH-004#3"
+      ],
+      "similaridades": [
+        0.53,
+        0.5,
+        0.493
+      ],
+      "similaridade_1o": 0.53,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "fora-pol-rh-007",
+      "tipo": "documento_ausente",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-005#1",
+        "POL-RH-006#1",
+        "POL-RH-003#11"
+      ],
+      "similaridades": [
+        0.469,
+        0.469,
+        0.46
+      ],
+      "similaridade_1o": 0.469,
+      "posicao": null,
+      "proibidos_visiveis": []
+    },
+    {
+      "id": "fora-conhecimento-geral",
+      "tipo": "fora_das_politicas",
+      "publico": null,
+      "tem_resposta": false,
+      "fontes_esperadas": [],
+      "recuperados": [
+        "POL-RH-006#8",
+        "POL-RH-004#2",
+        "POL-RH-010#2"
+      ],
+      "similaridades": [
+        0.438,
+        0.405,
+        0.394
+      ],
+      "similaridade_1o": 0.438,
+      "posicao": null,
+      "proibidos_visiveis": []
+    }
+  ]
+}
