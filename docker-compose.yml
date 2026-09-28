@@ -1,4 +1,24 @@
-# Banco PostgreSQL com a extensão pgvector.
+# Dois modos de uso:
+#
+#   docker compose up -d
+#     Sobe só o banco. A API e o Ollama rodam direto na máquina (desenvolvimento).
+#
+#   docker compose --profile completo up --build
+#     Sobe tudo em contêineres: banco, Ollama com o bge-m3, indexação e a app em
+#     http://localhost:8000. Na primeira vez ocupa cerca de 12 GB de disco (a imagem do Ollama
+#     tem 9,3 GB, porque inclui bibliotecas de placa de vídeo, e o modelo tem 1,2 GB).
+#
+# Usuário, senha, banco, porta e a chave do Groq vêm do arquivo .env (copie de .env.example).
+
+x-app: &app
+  build: .
+  image: rotasul-assistente-rh:local
+  env_file: .env
+  environment:
+    # Dentro da rede do Docker, cada serviço é encontrado pelo nome.
+    POSTGRES_HOST: postgres
+    POSTGRES_PORT: "5432"
+    OLLAMA_BASE_URL: http://ollama:11434
 
 services:
   postgres:
@@ -20,5 +40,52 @@ services:
       timeout: 5s
       retries: 10
 
+  # Porta 11434 não publicada: não briga com um Ollama já instalado na máquina.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: [completo]
+    restart: unless-stopped
+    volumes:
+      - ollama_modelos:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Baixa o bge-m3 (cerca de 1,2 GB) na primeira vez; depois fica no volume e termina na hora.
+  ollama-modelo:
+    image: ollama/ollama:latest
+    profiles: [completo]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "bge-m3"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  # Roda uma vez e termina. Rodar de novo não duplica nada e reaproveita os vetores (ADR-0005).
+  indexacao:
+    <<: *app
+    profiles: [completo]
+    command: ["python", "-m", "rotasul_rh.indexacao"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama-modelo:
+        condition: service_completed_successfully
+
+  app:
+    <<: *app
+    profiles: [completo]
+    restart: unless-stopped
+    ports:
+      # APP_PORT no .env troca a porta, se a 8000 já estiver em uso.
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    depends_on:
+      indexacao:
+        condition: service_completed_successfully
+
 volumes:
   postgres_dados:
+  ollama_modelos:

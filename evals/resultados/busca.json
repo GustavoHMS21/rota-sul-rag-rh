@@ -1,11 +1,11 @@
 {
   "k": 3,
   "resumo": {
-    "perguntas_com_resposta": 39,
-    "hit@1": 0.872,
-    "hit@3": 0.974,
-    "mrr": 0.919,
-    "vazamentos_de_publico": 3
+    "perguntas_com_resposta": 40,
+    "hit@1": 0.85,
+    "hit@3": 0.95,
+    "mrr": 0.896,
+    "vazamentos_de_publico": 4
   },
   "similaridade_do_1o": {
     "com_resposta": {
@@ -793,6 +793,30 @@
       ],
       "similaridade_1o": 0.576,
       "posicao": 1,
+      "proibidos_visiveis": [
+        "Até 2 dias por semana em home office"
+      ]
+    },
+    {
+      "id": "publico-home-office-operacao-curta",
+      "tipo": "publico",
+      "publico": "operacao",
+      "tem_resposta": true,
+      "fontes_esperadas": [
+        "POL-RH-005#2"
+      ],
+      "recuperados": [
+        "POL-RH-005#3",
+        "POL-RH-005#8",
+        "POL-RH-005#7"
+      ],
+      "similaridades": [
+        0.613,
+        0.59,
+        0.585
+      ],
+      "similaridade_1o": 0.613,
+      "posicao": null,
       "proibidos_visiveis": [
         "Até 2 dias por semana em home office"
       ]
