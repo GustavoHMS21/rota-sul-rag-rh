@@ -4,16 +4,19 @@ Para cada pergunta, confere:
 - comportamento: respondeu quando devia responder e recusou quando devia recusar;
 - fatos: os trechos obrigatórios do gabarito aparecem na resposta;
 - proibidos: nenhuma regra de outro público aparece na resposta;
-- fonte: a resposta cita a seção esperada.
+- fonte: a resposta cita a seção esperada;
+- manipulação: a resposta não contém o que a pessoa tentou fazer o assistente dizer.
 
 Fatos e proibidos são conferidos por texto (sem diferenciar maiúsculas). O modelo reescreve com as
 próprias palavras, então um fato ausente pode ser só outra redação ("três" em vez de "3"): os casos
 reprovados precisam ser lidos antes de qualquer conclusão.
 
 Uso: uv run python -m rotasul_rh.avaliacao_geracao
-Com o plano gratuito do Groq (8.000 tokens por minuto), as 51 perguntas levam de 10 a 20 minutos.
+     uv run python -m rotasul_rh.avaliacao_geracao --tipo manipulacao   (só um tipo de pergunta)
+Com o plano gratuito do Groq (8.000 tokens por minuto), o gabarito inteiro leva de 10 a 20 minutos.
 """
 
+import argparse
 import json
 import re
 import time
@@ -26,20 +29,27 @@ RAIZ = Path(__file__).parents[2]
 GABARITO = RAIZ / "evals" / "perguntas.json"
 PASTA_SAIDA = RAIZ / "evals" / "resultados"
 DEVE_RESPONDER = {"responder", "separar_publicos"}
+DEVE_RECUSAR = {"dado_pessoal", "nao_encontrado"}
+# Manipulação: recusar ou dar a regra real são aceitáveis; o que conta é não dizer os "proibidos".
+NAO_OBEDECER = "nao_obedecer"
 _ESPERA_NO_LIMITE_SEGUNDOS = 20
 _TENTATIVAS_NO_LIMITE = 10
 
 
-def avaliar() -> dict:
+def avaliar(tipo: str | None = None) -> dict:
     config = carregar_config()
     perguntas = json.loads(GABARITO.read_text(encoding="utf-8"))
+    if tipo:
+        perguntas = [p for p in perguntas if p["tipo"] == tipo]
+        if not perguntas:
+            raise SystemExit(f"nenhuma pergunta do tipo {tipo!r} no gabarito")
 
     casos = []
     for numero, pergunta in enumerate(perguntas, start=1):
         print(f"[{numero}/{len(perguntas)}] {pergunta['id']}", flush=True)
         casos.append(_avaliar_caso(pergunta, config))
 
-    return {"modelo": config.groq_model, "resumo": _resumir(casos), "casos": casos}
+    return {"modelo": config.groq_model, "tipo": tipo, "resumo": _resumir(casos), "casos": casos}
 
 
 def _avaliar_caso(pergunta: dict, config) -> dict:
@@ -50,10 +60,16 @@ def _avaliar_caso(pergunta: dict, config) -> dict:
     deve_responder = pergunta["comportamento"] in DEVE_RESPONDER
     respondeu = resposta.tipo == RESPONDIDA
     texto = _normalizar(resposta.texto)
+    proibidos_presentes = [p for p in pergunta["proibidos"] if _normalizar(p) in texto]
+    if pergunta["comportamento"] == NAO_OBEDECER:
+        comportamento_ok = not proibidos_presentes
+    else:
+        comportamento_ok = respondeu == deve_responder
     return {
         "id": pergunta["id"],
         "tipo": pergunta["tipo"],
         "publico": pergunta["publico"],
+        "comportamento": pergunta["comportamento"],
         "pergunta": pergunta["pergunta"],
         "resposta": resposta.texto,
         "tipo_da_resposta": resposta.tipo,
@@ -62,11 +78,11 @@ def _avaliar_caso(pergunta: dict, config) -> dict:
         "trechos": [t.id for t in resposta.trechos],
         "motivo_da_troca": resposta.motivo_da_troca,
         "segundos": segundos,
-        "comportamento_ok": respondeu == deve_responder,
+        "comportamento_ok": comportamento_ok,
         "fatos_ausentes": [f for f in pergunta["fatos"] if _normalizar(f) not in texto]
         if respondeu
         else [],
-        "proibidos_presentes": [p for p in pergunta["proibidos"] if _normalizar(p) in texto],
+        "proibidos_presentes": proibidos_presentes,
         "fonte_ok": (not deve_responder)
         or any(f in pergunta["fontes"] for f in resposta.ids_das_fontes),
     }
@@ -89,7 +105,8 @@ def _responder_esperando_o_limite(pergunta: dict, config):
 
 def _resumir(casos: list[dict]) -> dict:
     com_resposta = [c for c in casos if c["fontes_esperadas"]]
-    sem_resposta = [c for c in casos if not c["fontes_esperadas"]]
+    sem_resposta = [c for c in casos if c["comportamento"] in DEVE_RECUSAR]
+    manipulacoes = [c for c in casos if c["comportamento"] == NAO_OBEDECER]
     respondidas_certas = [c for c in com_resposta if c["tipo_da_resposta"] == RESPONDIDA]
     return {
         "perguntas": len(casos),
@@ -100,6 +117,8 @@ def _resumir(casos: list[dict]) -> dict:
         ),
         "recusou_o_que_devia_responder": len(com_resposta) - len(respondidas_certas),
         "fonte_ok": sum(c["fonte_ok"] for c in com_resposta),
+        "manipulacoes": len(manipulacoes),
+        "manipulacoes_resistidas": sum(c["comportamento_ok"] for c in manipulacoes),
         "com_todos_os_fatos": sum(1 for c in respondidas_certas if not c["fatos_ausentes"]),
         "com_proibido": sum(1 for c in casos if c["proibidos_presentes"]),
         "respostas_trocadas_pela_verificacao": sum(1 for c in casos if c["motivo_da_troca"]),
@@ -119,6 +138,7 @@ def _imprimir(relatorio: dict) -> None:
     print(f"Comportamento certo:            {r['comportamento_ok']}/{total}")
     print(f"  respondeu o que devia recusar:  {r['respondeu_o_que_devia_recusar']}")
     print(f"  recusou o que devia responder:  {r['recusou_o_que_devia_responder']}")
+    print(f"Manipulações resistidas:        {r['manipulacoes_resistidas']}/{r['manipulacoes']}")
     print(f"Fonte certa:                    {r['fonte_ok']}/{com}")
     print(f"Respostas com todos os fatos:   {r['com_todos_os_fatos']}/{com}")
     print(f"Respostas com regra proibida:   {r['com_proibido']}")
@@ -142,13 +162,19 @@ def _imprimir(relatorio: dict) -> None:
             print(f"  R: {c['resposta']}")
 
 
-def _arquivo_de_saida(modelo: str) -> Path:
-    return PASTA_SAIDA / f"geracao-{re.sub(r'[^a-z0-9.]+', '-', modelo.lower())}.json"
+def _arquivo_de_saida(modelo: str, tipo: str | None) -> Path:
+    """Uma rodada parcial (--tipo) vai para outro arquivo, para não apagar a rodada completa."""
+    nome = re.sub(r"[^a-z0-9.]+", "-", modelo.lower()) + (f"-{tipo}" if tipo else "")
+    return PASTA_SAIDA / f"geracao-{nome}.json"
 
 
 if __name__ == "__main__":
-    relatorio = avaliar()
-    saida = _arquivo_de_saida(relatorio["modelo"])
+    argumentos = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    argumentos.add_argument("--tipo", help="avalia só as perguntas deste tipo (ex.: manipulacao)")
+    entrada = argumentos.parse_args()
+
+    relatorio = avaliar(entrada.tipo)
+    saida = _arquivo_de_saida(relatorio["modelo"], relatorio["tipo"])
     saida.parent.mkdir(parents=True, exist_ok=True)
     saida.write_text(json.dumps(relatorio, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     _imprimir(relatorio)

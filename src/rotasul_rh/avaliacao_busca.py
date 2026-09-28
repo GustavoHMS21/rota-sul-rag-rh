@@ -31,7 +31,9 @@ def avaliar() -> dict:
         casos.append(_avaliar_caso(p, resultados))
 
     com_resposta = [c for c in casos if c["tem_resposta"]]
-    sem_resposta = [c for c in casos if not c["tem_resposta"]]
+    # Só as recusas de verdade entram na comparação de similaridade; os casos de manipulação
+    # (sem fonte esperada, mas que podem ser respondidos com a regra real) ficam de fora.
+    sem_resposta = [c for c in casos if c["comportamento"] in SEM_RESPOSTA]
     return {
         "k": K,
         "resumo": {
@@ -59,7 +61,8 @@ def _avaliar_caso(pergunta: dict, resultados: list[Resultado]) -> dict:
         "id": pergunta["id"],
         "tipo": pergunta["tipo"],
         "publico": pergunta["publico"],
-        "tem_resposta": pergunta["comportamento"] not in SEM_RESPOSTA,
+        "comportamento": pergunta["comportamento"],
+        "tem_resposta": bool(pergunta["fontes"]),
         "fontes_esperadas": pergunta["fontes"],
         "recuperados": [r.id for r in resultados],
         "similaridades": [round(r.similaridade, 3) for r in resultados],
@@ -100,7 +103,7 @@ def _imprimir(relatorio: dict) -> None:
 
     print("\nPerguntas sem resposta (similaridade do 1º e o que veio):")
     for c in sorted(relatorio["casos"], key=lambda c: -c["similaridade_1o"]):
-        if not c["tem_resposta"]:
+        if c["comportamento"] in SEM_RESPOSTA:
             print(f"  {c['similaridade_1o']:.3f}  {c['id']} -> {c['recuperados'][0]}")
 
     print("\nVazamentos de público:")

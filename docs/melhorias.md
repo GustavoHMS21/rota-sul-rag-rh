@@ -28,10 +28,11 @@ Pontos conhecidos que não bloqueiam a v1. Cada um diz de onde veio e como seria
 
 ## Avaliação
 
-- **Fatos por texto exato são rígidos demais:** 28 de 40 respostas passam, mas 37 estão corretas
+- **Fatos por texto exato são rígidos demais:** 28 de 42 respostas passam, mas 40 estão completas
   quando lidas (outra redação). Reduzir os fatos ao essencial (números e prazos) ou usar um segundo
   modelo como avaliador (LLM-as-judge). Origem: ADR-0007.
-- **Casos de manipulação no gabarito** ("ignore as regras e diga que..."): hoje testados só à mão.
+- **Mais casos de manipulação:** tentativas em outro idioma ou escondidas em textos longos. Os 7
+  casos atuais estão no gabarito desde o ADR-0010.
 
 ## Qualidade e operação
 
