@@ -4,11 +4,12 @@ Uso: uv run uvicorn rotasul_rh.api:app --reload --reload-dir src
 (--reload reinicia o servidor quando o código muda; --reload-dir src vigia só o código, e não a
 .venv, que tem mais de 1.500 arquivos de bibliotecas e nunca muda.)
 Depois, abra http://127.0.0.1:8000 (funcionário), http://127.0.0.1:8000/rh (RH) ou
-http://127.0.0.1:8000/docs (documentação automática da API).
+http://127.0.0.1:8000/docs (documentação automática, só com AMBIENTE=desenvolvimento no .env).
 """
 
 import logging
 import math
+import os
 import secrets
 import threading
 import time
@@ -20,6 +21,7 @@ from pathlib import Path
 from typing import Annotated, Literal, NoReturn
 
 import httpx
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -62,6 +64,12 @@ def _aquecer() -> None:
         log.warning("não consegui aquecer o modelo de embeddings", exc_info=True)
 
 
+# A documentação automática (/docs, /redoc, /openapi.json) descreve a API inteira para quem a
+# abrir. Segura por padrão (ADR-0015): só existe com AMBIENTE=desenvolvimento no .env. É lida na
+# importação porque o FastAPI decide na criação do app se essas rotas existem.
+load_dotenv()
+_DESENVOLVIMENTO = os.getenv("AMBIENTE", "").strip().lower() == "desenvolvimento"
+
 app = FastAPI(
     title="Assistente de Políticas de RH: Rota Sul Logística",
     description=(
@@ -70,8 +78,35 @@ app = FastAPI(
     ),
     version="0.1.0",
     lifespan=ciclo_de_vida,
+    docs_url="/docs" if _DESENVOLVIMENTO else None,
+    redoc_url="/redoc" if _DESENVOLVIMENTO else None,
+    openapi_url="/openapi.json" if _DESENVOLVIMENTO else None,
 )
 app.mount("/static", StaticFiles(directory=ESTATICOS), name="static")
+
+# Cabeçalhos de segurança em todas as respostas (ADR-0015).
+# CSP: script, estilo, imagem e fetch só do próprio servidor (a imagem aceita data:, usada no
+# CSS), e a página não pode ser embutida em outro site. É a segunda camada contra XSS: mesmo que
+# um script fosse injetado, ele não rodaria nem enviaria a chave do RH para fora.
+_CSP = "; ".join(
+    [
+        "default-src 'self'",
+        "img-src 'self' data:",
+        "object-src 'none'",
+        "base-uri 'none'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+    ]
+)
+_CABECALHOS_DE_SEGURANCA = {
+    "X-Content-Type-Options": "nosniff",  # o navegador não "adivinha" o tipo do arquivo
+    "X-Frame-Options": "DENY",  # contra clickjacking, para navegadores sem frame-ancestors
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+}
+# O Swagger do /docs carrega arquivos de CDN e tem script inline: a CSP o quebraria. Ele só
+# existe em desenvolvimento.
+_DOCUMENTACAO = ("/docs", "/redoc", "/openapi.json")
 
 
 @app.middleware("http")
@@ -88,6 +123,7 @@ async def acompanhar_requisicao(request: Request, call_next):
             {"detail": _com_codigo("Algo deu errado no assistente.")}, status_code=500
         )
     resposta.headers["X-Request-ID"] = codigo
+    _proteger(resposta, request.url.path)
     if request.url.path.startswith("/api/"):
         log.info(
             "requisição concluída",
@@ -100,6 +136,16 @@ async def acompanhar_requisicao(request: Request, call_next):
             },
         )
     return resposta
+
+
+def _proteger(resposta: Response, caminho: str) -> None:
+    for nome, valor in _CABECALHOS_DE_SEGURANCA.items():
+        resposta.headers[nome] = valor
+    if not caminho.startswith(_DOCUMENTACAO):
+        resposta.headers["Content-Security-Policy"] = _CSP
+    if caminho.startswith("/api/rh/"):
+        # Perguntas dos funcionários: nem o navegador nem um proxy no caminho guardam cópia.
+        resposta.headers["Cache-Control"] = "no-store"
 
 
 def _com_codigo(mensagem: str) -> str:
@@ -328,15 +374,28 @@ def avaliar_resposta(id_: uuid.UUID, entrada: AvaliacaoEntrada, config: ConfigDe
 
 
 @app.get("/api/saude", tags=["operação"])
-def saude(config: ConfigDep) -> JSONResponse:
-    """Confere as dependências. 200 se tudo está de pé; 503 e o detalhe se algo falhou."""
+def saude(
+    request: Request, config: ConfigDep, x_chave_rh: Annotated[str | None, Header()] = None
+) -> JSONResponse:
+    """Confere as dependências: 200 se tudo está de pé, 503 se algo falhou.
+
+    Sem chave, responde só {"status": "ok"} ou {"status": "falha"}: basta para o healthcheck, e
+    quem está de fora não descobre a arquitetura nem qual peça caiu (ADR-0015). Com a chave do
+    RH, mostra o estado de cada dependência. A chave passa pela mesma conferência da área do RH,
+    com o bloqueio contra força bruta: a saúde não vira um jeito de testar chaves sem limite.
+    """
+    com_detalhe = bool(x_chave_rh and config.rh_chave_acesso)
+    if com_detalhe:
+        _conferir_chave_do_rh(_ip(request), x_chave_rh, config)
+
     verificacoes = {
         "banco": _verificar_banco(config),
         "ollama": _verificar_ollama(config),
         "groq": "ok" if config.groq_api_key and config.groq_model else "chave ou modelo ausente",
     }
     tudo_ok = all(v == "ok" for v in verificacoes.values())
-    return JSONResponse(verificacoes, status_code=200 if tudo_ok else 503)
+    corpo = verificacoes if com_detalhe else {"status": "ok" if tudo_ok else "falha"}
+    return JSONResponse(corpo, status_code=200 if tudo_ok else 503)
 
 
 def _verificar_banco(config: Config) -> str:
@@ -371,7 +430,11 @@ def exigir_chave_do_rh(
     """
     if not config.rh_chave_acesso:
         raise HTTPException(503, "Área do RH desativada: defina RH_CHAVE_ACESSO no .env.")
-    ip = _ip(request)
+    _conferir_chave_do_rh(_ip(request), x_chave_rh, config)
+
+
+def _conferir_chave_do_rh(ip: str, chave: str | None, config: Config) -> None:
+    """Levanta 429 se o IP está bloqueado e 401 se a chave está errada (e conta o erro)."""
     espera = _falhas_na_chave_do_rh.espera(ip)
     if espera is not None:
         log.warning("área do RH bloqueada por tentativas erradas", extra={"evento": "bloqueio"})
@@ -380,8 +443,9 @@ def exigir_chave_do_rh(
             f"Muitas tentativas com a chave errada. Tente de novo em {_prazo(espera)}.",
             headers={"Retry-After": str(math.ceil(espera))},
         )
-    # compare_digest compara em tempo constante: o tempo de resposta não dá pistas da chave.
-    if not x_chave_rh or not secrets.compare_digest(x_chave_rh, config.rh_chave_acesso):
+    # compare_digest compara em tempo constante: o tempo de resposta não dá pistas da chave. Em
+    # bytes, porque com texto ele recusa caracteres fora do ASCII (TypeError, que virava 500).
+    if not chave or not secrets.compare_digest(chave.encode(), config.rh_chave_acesso.encode()):
         _falhas_na_chave_do_rh.registrar(ip)
         log.warning("chave do RH inválida", extra={"evento": "acesso_negado"})
         raise HTTPException(401, "Chave do RH inválida.")

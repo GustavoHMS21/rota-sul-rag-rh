@@ -39,6 +39,9 @@ that comes only from the official policies, with the source.
 - Holds up under load and misuse: question limits per IP and per day (429 with `Retry-After`), a
   lockout after 5 wrong HR keys, an `Idempotency-Key` so a resent question is answered once and not
   twice, and timeouts and retries set per dependency.
+- Safe defaults for production: security headers on every response (a strict Content Security
+  Policy, no framing, no sniffing), API docs off unless in development, a health check that tells
+  outsiders only "ok" or "failed", and a container that doesn't run as root.
 
 ## How it works
 
@@ -182,7 +185,8 @@ The first run downloads the model and indexes the policies. When it's done, open
 
 - http://localhost:8000 for the employee page
 - http://localhost:8000/rh for the HR page
-- http://localhost:8000/docs for the API documentation
+- http://localhost:8000/docs for the API documentation (only with `AMBIENTE=desenvolvimento`, as
+  in `.env.example`; it is off by default)
 
 If port 8000 is taken, set `APP_PORT` in `.env`.
 

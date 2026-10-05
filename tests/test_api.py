@@ -185,13 +185,57 @@ def test_area_do_rh_com_a_chave(cliente, monkeypatch):
     assert cliente.get("/rh").status_code == 200  # a página em si é pública; os dados, não
 
 
-def test_saude_aponta_o_que_esta_fora(cliente):
+def test_saude_sem_chave_so_diz_que_falhou(cliente):
     resposta = cliente.get("/api/saude")
 
     # Na configuração de teste, banco e Ollama apontam para endereços sem serviço.
     assert resposta.status_code == 503
+    assert resposta.json() == {"status": "falha"}  # sem revelar qual peça nem a arquitetura
+
+
+def test_saude_com_a_chave_do_rh_aponta_o_que_esta_fora(cliente):
+    resposta = cliente.get("/api/saude", headers={"X-Chave-RH": CHAVE_RH})
+
+    assert resposta.status_code == 503
     assert resposta.json()["ollama"] == "sem conexão"
     assert resposta.json()["groq"] == "ok"
+
+
+def test_saude_com_chave_errada_conta_para_o_bloqueio(cliente):
+    """Se não contasse, a saúde seria um jeito de testar chaves sem limite."""
+    for _ in range(5):
+        assert cliente.get("/api/saude", headers={"X-Chave-RH": "chute"}).status_code == 401
+
+    assert cliente.get("/api/rh/resumo", headers={"X-Chave-RH": CHAVE_RH}).status_code == 429
+
+
+def test_chave_com_acento_e_recusada_sem_derrubar_o_servidor(cliente):
+    """compare_digest com texto fora do ASCII levantava TypeError (500)."""
+    resposta = cliente.get("/api/rh/resumo", headers={"X-Chave-RH": "chave-errada-é".encode()})
+
+    assert resposta.status_code == 401
+
+
+# ---------------------------------------------------------------- cabeçalhos de segurança
+
+
+@pytest.mark.parametrize("caminho", ["/", "/rh", "/static/app.js", "/api/saude"])
+def test_cabecalhos_de_seguranca_em_todas_as_respostas(cliente, caminho):
+    cabecalhos = cliente.get(caminho).headers
+
+    assert "default-src 'self'" in cabecalhos["Content-Security-Policy"]
+    assert "frame-ancestors 'none'" in cabecalhos["Content-Security-Policy"]
+    assert cabecalhos["X-Content-Type-Options"] == "nosniff"
+    assert cabecalhos["X-Frame-Options"] == "DENY"
+    assert cabecalhos["Referrer-Policy"] == "no-referrer"
+
+
+def test_area_do_rh_nao_fica_em_cache(cliente, monkeypatch):
+    monkeypatch.setattr(api.registro, "resumir", lambda config: {"total": 3})
+
+    resposta = cliente.get("/api/rh/resumo", headers={"X-Chave-RH": CHAVE_RH})
+
+    assert resposta.headers["Cache-Control"] == "no-store"
 
 
 # ---------------------------------------------------------------- idempotência e limites
