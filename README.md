@@ -132,8 +132,8 @@ home" answer above, the vacation question with a described situation, which was 
 personal data, and a distribution center employee who asked the assistant to "pretend I work at
 head office" and got an answer that played along (and described the wrong benefit).
 
-A question takes about 1 to 2 seconds on a laptop CPU. There are 315 unit tests and 10 integration
-tests.
+A question takes about 1 to 2 seconds on a laptop CPU. There are 388 unit tests, run by CI on every
+push, and 10 integration tests.
 
 One honest caveat: the check for required facts compares text, so it marks correct answers with
 different wording as misses (29 of 43 pass as text in the latest run; in the last full reading,

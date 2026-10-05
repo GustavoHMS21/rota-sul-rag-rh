@@ -55,9 +55,7 @@ def test_pergunta_usa_o_limite_curto(ollama):
     assert ollama["chamadas"] == [TIMEOUT_PERGUNTA]
 
 
-@pytest.mark.parametrize(
-    "falha", [httpx.ReadTimeout("lento"), httpx.ConnectError("recusada"), 503]
-)
+@pytest.mark.parametrize("falha", [httpx.ReadTimeout("lento"), httpx.ConnectError("recusada"), 503])
 def test_falha_temporaria_na_pergunta_e_repetida_uma_vez(ollama, falha):
     ollama["roteiro"] = [falha, 200]
 
