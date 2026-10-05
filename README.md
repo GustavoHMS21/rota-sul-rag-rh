@@ -36,6 +36,9 @@ that comes only from the official policies, with the source.
 - Logs every question anonymously: no user, IP or browser data, ID numbers, emails and phone
   numbers masked before saving, and records deleted after 180 days. HR reads the log on a page
   protected by an access key.
+- Holds up under load and misuse: question limits per IP and per day (429 with `Retry-After`), a
+  lockout after 5 wrong HR keys, an `Idempotency-Key` so a resent question is answered once and not
+  twice, and timeouts and retries set per dependency.
 
 ## How it works
 

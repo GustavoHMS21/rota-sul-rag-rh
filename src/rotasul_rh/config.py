@@ -24,6 +24,11 @@ class Config:
     rh_chave_acesso: str | None = None
     # Dias que as perguntas registradas ficam guardadas antes de serem apagadas (ADR-0008).
     retencao_dias: int = 180
+    # Limite de perguntas por IP e no total do dia (ADR-0013). O total protege a cota diária do
+    # Groq (1.000 requisições no plano gratuito) e deixa uma sobra para a avaliação.
+    limite_perguntas_por_minuto: int = 10
+    limite_perguntas_por_hora: int = 60
+    limite_perguntas_por_dia: int = 900
 
     @property
     def conninfo(self) -> str:
@@ -49,6 +54,9 @@ def carregar_config() -> Config:
         groq_model=os.getenv("GROQ_MODEL") or None,
         rh_chave_acesso=os.getenv("RH_CHAVE_ACESSO") or None,
         retencao_dias=int(os.getenv("RETENCAO_DIAS", "180")),
+        limite_perguntas_por_minuto=int(os.getenv("LIMITE_PERGUNTAS_POR_MINUTO", "10")),
+        limite_perguntas_por_hora=int(os.getenv("LIMITE_PERGUNTAS_POR_HORA", "60")),
+        limite_perguntas_por_dia=int(os.getenv("LIMITE_PERGUNTAS_POR_DIA", "900")),
     )
 
 

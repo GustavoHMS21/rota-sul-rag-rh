@@ -25,6 +25,7 @@ const TITULOS = {
   dado_pessoal: "Assunto individual",
 };
 const EMAIL = /([\w.+-]+@[\w-]+(?:\.[\w-]+)+)/;
+const TENTATIVAS = 3; // envio original + 2 reenvios com a mesma Idempotency-Key
 let idDaResposta = null;
 
 // Lembra o público escolhido neste navegador. O armazenamento pode estar bloqueado (janela
@@ -71,11 +72,7 @@ formulario.addEventListener("submit", async (evento) => {
   mostrarStatus("Consultando as políticas...");
 
   try {
-    const resposta = await fetch("/api/perguntas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pergunta, publico: campoPublico.value || null }),
-    });
+    const resposta = await enviarPergunta({ pergunta, publico: campoPublico.value || null });
     const dados = await resposta.json();
     if (!resposta.ok) {
       mostrarStatus(mensagemDeErro(resposta.status, dados), true);
@@ -107,6 +104,37 @@ avaliacao.addEventListener("click", async (evento) => {
     obrigado.hidden = !resposta.ok;
   } catch {}
 });
+
+// Envia a pergunta com uma Idempotency-Key nova e, se a rede falhar, reenvia com a MESMA chave.
+// Se a primeira tentativa chegou ao servidor, ele devolve a resposta já pronta em vez de
+// responder e registrar a pergunta duas vezes. 409 = a primeira ainda está sendo respondida.
+async function enviarPergunta(corpo) {
+  const chave = gerarChave();
+  for (let tentativa = 1; ; tentativa++) {
+    try {
+      const resposta = await fetch("/api/perguntas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": chave },
+        body: JSON.stringify(corpo),
+      });
+      if (resposta.status !== 409 || tentativa >= TENTATIVAS) return resposta;
+    } catch (erro) {
+      if (tentativa >= TENTATIVAS) throw erro;
+    }
+    await esperar(1000 * tentativa);
+  }
+}
+
+function gerarChave() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  // Fora de contexto seguro (http sem ser localhost), randomUUID não existe.
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function esperar(milissegundos) {
+  return new Promise((resolver) => setTimeout(resolver, milissegundos));
+}
 
 function mostrarResposta(dados) {
   idDaResposta = dados.id;

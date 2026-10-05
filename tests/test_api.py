@@ -2,6 +2,7 @@
 responder() e o registro são trocados por versões falsas."""
 
 import uuid
+from dataclasses import replace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,6 +12,8 @@ from rotasul_rh.busca import Resultado
 from rotasul_rh.config import Config
 from rotasul_rh.embeddings import ErroEmbedding
 from rotasul_rh.geracao import ErroGeracao, ErroLimite, Resposta
+from rotasul_rh.idempotencia import Idempotencia
+from rotasul_rh.limites import Limitador, Regra
 
 CHAVE_RH = "chave-de-teste"
 ID = uuid.UUID("12345678-1234-5678-1234-567812345678")
@@ -60,7 +63,11 @@ def chamadas(monkeypatch):
 
 
 @pytest.fixture
-def cliente():
+def cliente(monkeypatch):
+    # Estado em memória zerado a cada teste: um teste não herda as contagens do outro.
+    api._limitadores_de_perguntas.cache_clear()
+    monkeypatch.setattr(api, "_idempotencia", Idempotencia())
+    monkeypatch.setattr(api, "_falhas_na_chave_do_rh", Limitador([Regra(5, 15 * 60)]))
     api.app.dependency_overrides[api.obter_config] = _config
     yield TestClient(api.app)
     api.app.dependency_overrides.clear()
@@ -185,3 +192,101 @@ def test_saude_aponta_o_que_esta_fora(cliente):
     assert resposta.status_code == 503
     assert resposta.json()["ollama"] == "sem conexão"
     assert resposta.json()["groq"] == "ok"
+
+
+# ---------------------------------------------------------------- idempotência e limites
+
+
+def _contar_respostas(monkeypatch, *erros):
+    """Troca responder() por uma versão que levanta os erros dados, em ordem, e depois responde.
+    Devolve a lista de chamadas."""
+    chamadas = []
+    pendentes = list(erros)
+
+    def responder_falso(pergunta, publico, config):
+        chamadas.append(pergunta)
+        if pendentes:
+            raise pendentes.pop(0)
+        return RESPOSTA
+
+    monkeypatch.setattr(api, "responder", responder_falso)
+    monkeypatch.setattr(api.registro, "registrar", lambda *_: ID)
+    return chamadas
+
+
+def test_reenvio_com_a_mesma_chave_devolve_a_resposta_sem_perguntar_de_novo(cliente, monkeypatch):
+    chamadas = _contar_respostas(monkeypatch)
+    corpo = {"pergunta": "Posso vender férias?", "publico": "administrativo"}
+    cabecalhos = {"Idempotency-Key": "4f9c2a10-0000-4000-8000-000000000001"}
+
+    primeira = cliente.post("/api/perguntas", json=corpo, headers=cabecalhos)
+    reenvio = cliente.post("/api/perguntas", json=corpo, headers=cabecalhos)
+
+    assert primeira.status_code == reenvio.status_code == 200
+    assert reenvio.json() == primeira.json()
+    assert reenvio.headers["Idempotent-Replayed"] == "true"
+    assert len(chamadas) == 1  # o modelo foi chamado (e a pergunta registrada) uma vez só
+
+
+def test_mesma_chave_com_outra_pergunta_e_recusada(cliente, monkeypatch):
+    _contar_respostas(monkeypatch)
+    cabecalhos = {"Idempotency-Key": "chave-1"}
+    cliente.post("/api/perguntas", json={"pergunta": "Posso vender férias?"}, headers=cabecalhos)
+
+    resposta = cliente.post(
+        "/api/perguntas", json={"pergunta": "Como peço EPI?"}, headers=cabecalhos
+    )
+
+    assert resposta.status_code == 422
+
+
+def test_falha_libera_a_chave_e_o_reenvio_tenta_de_verdade(cliente, monkeypatch):
+    chamadas = _contar_respostas(monkeypatch, ErroGeracao("groq fora"))
+    corpo = {"pergunta": "Posso vender férias?"}
+    cabecalhos = {"Idempotency-Key": "chave-1"}
+
+    assert cliente.post("/api/perguntas", json=corpo, headers=cabecalhos).status_code == 503
+    assert cliente.post("/api/perguntas", json=corpo, headers=cabecalhos).status_code == 200
+    assert len(chamadas) == 2
+
+
+def test_limite_por_ip_devolve_429_com_retry_after(cliente, monkeypatch):
+    chamadas = _contar_respostas(monkeypatch)
+    api.app.dependency_overrides[api.obter_config] = lambda: replace(
+        _config(), limite_perguntas_por_minuto=2
+    )
+    corpo = {"pergunta": "Posso vender férias?"}
+
+    cliente.post("/api/perguntas", json={"pergunta": ""})  # inválida (422): não conta
+    respostas = [cliente.post("/api/perguntas", json=corpo) for _ in range(3)]
+
+    assert [r.status_code for r in respostas] == [200, 200, 429]
+    assert 0 < int(respostas[2].headers["Retry-After"]) <= 60
+    assert "muitas perguntas" in respostas[2].json()["detail"]
+    assert len(chamadas) == 2  # a barrada não chegou ao modelo
+
+
+def test_teto_do_dia_vale_para_todos_os_ips(cliente, monkeypatch):
+    _contar_respostas(monkeypatch)
+    api.app.dependency_overrides[api.obter_config] = lambda: replace(
+        _config(), limite_perguntas_por_dia=1
+    )
+    corpo = {"pergunta": "Posso vender férias?"}
+
+    assert cliente.post("/api/perguntas", json=corpo).status_code == 200
+    resposta = cliente.post("/api/perguntas", json=corpo)
+
+    assert resposta.status_code == 429
+    assert "rh@rotasul.com.br" in resposta.json()["detail"]
+
+
+def test_chave_do_rh_errada_cinco_vezes_bloqueia_ate_a_certa(cliente, monkeypatch):
+    monkeypatch.setattr(api.registro, "resumir", lambda config: {"total": 3})
+
+    for _ in range(5):
+        errada = cliente.get("/api/rh/resumo", headers={"X-Chave-RH": "chute"})
+        assert errada.status_code == 401
+    certa = cliente.get("/api/rh/resumo", headers={"X-Chave-RH": CHAVE_RH})
+
+    assert certa.status_code == 429
+    assert int(certa.headers["Retry-After"]) > 0

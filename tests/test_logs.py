@@ -129,6 +129,7 @@ def cliente(monkeypatch):
     monkeypatch.setattr(
         api.registro, "registrar", lambda *_: "29876b73-ae1d-4379-8cc1-8ba2c07899fb"
     )
+    api._limitadores_de_perguntas.cache_clear()  # contagens zeradas a cada teste
     api.app.dependency_overrides[api.obter_config] = _config
     yield TestClient(api.app)
     api.app.dependency_overrides.clear()
