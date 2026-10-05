@@ -4,23 +4,43 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Área do RH | Rota Sul Logística</title>
+  <link rel="icon" href="/static/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/estilo.css">
 </head>
 <body>
-<main class="largo">
-  <header>
-    <h1>Área do RH</h1>
-    <p>Perguntas registradas de forma anônima. Nada identifica quem perguntou.</p>
-  </header>
+<header class="topo">
+  <div class="topo-interno">
+    <a class="marca" href="/" aria-label="Rota Sul Logística, portal do colaborador">
+      <img src="/static/logo.svg" alt="" width="36" height="36">
+      <span class="marca-nome"><strong>Rota Sul</strong><small>Logística</small></span>
+    </a>
+    <span class="topo-produto">Área do RH</span>
+    <a class="topo-link" href="/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      <span>Portal do Colaborador</span>
+    </a>
+  </div>
+</header>
 
-  <form id="entrada" class="cartao">
+<section class="faixa">
+  <div class="faixa-interna">
+    <p class="sobretitulo">Recursos Humanos</p>
+    <h1>Perguntas dos colaboradores</h1>
+    <p>Registro anônimo das dúvidas enviadas ao assistente. Nada identifica quem perguntou.</p>
+  </div>
+</section>
+
+<main class="conteudo">
+  <form id="entrada" class="cartao entrada-rh">
+    <h2 class="cartao-titulo">Acesso restrito</h2>
     <div class="campo">
       <label for="chave">Chave de acesso do RH</label>
       <input id="chave" type="password" autocomplete="current-password" required>
+      <p class="dica">A chave fica só nesta aba do navegador e some quando ela é fechada.</p>
     </div>
     <div class="linha">
-      <span class="aviso">A chave fica só nesta aba do navegador e some quando ela é fechada.</span>
-      <button type="submit">Entrar</button>
+      <span></span>
+      <button type="submit" class="primario">Entrar</button>
     </div>
   </form>
 
@@ -37,7 +57,7 @@
             <option value="">Todas</option>
             <option value="respondida">Respondidas</option>
             <option value="nao_encontrado">Não encontrado nas políticas</option>
-            <option value="dado_pessoal">Dado pessoal (recusada)</option>
+            <option value="dado_pessoal">Dado pessoal (encaminhada ao RH)</option>
           </select>
         </div>
         <button type="button" class="secundario" id="atualizar">Atualizar</button>
@@ -60,10 +80,17 @@
           <tbody id="linhas"></tbody>
         </table>
       </div>
-      <p class="aviso" id="vazio" hidden>Nenhuma pergunta registrada.</p>
+      <p class="dica" id="vazio" hidden>Nenhuma pergunta registrada.</p>
     </div>
   </section>
 </main>
+
+<footer class="rodape">
+  <div class="rodape-interno">
+    <span>© 2026 Rota Sul Logística Ltda. · Campinas · Jundiaí · Sumaré</span>
+    <span class="rodape-nota">Empresa fictícia, criada para um projeto de portfólio.</span>
+  </div>
+</footer>
 <script src="/static/rh.js"></script>
 </body>
 </html>

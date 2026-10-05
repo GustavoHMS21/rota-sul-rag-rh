@@ -85,13 +85,13 @@ function mostrarResumo(r) {
     [r.total, "perguntas registradas"],
     [r.respondidas, "respondidas"],
     [`${recusas} (${percentual}%)`, "encaminhadas ao RH"],
-    [r.avaliacoes_uteis, "👍 ajudou"],
-    [r.avaliacoes_nao_uteis, "👎 não ajudou"],
+    [r.avaliacoes_uteis, "avaliadas como úteis"],
+    [r.avaliacoes_nao_uteis, "avaliadas como não úteis"],
   ];
   numeros.replaceChildren(
-    ...itens.map(([valor, rotulo]) => {
+    ...itens.map(([valor, rotulo], indice) => {
       const bloco = document.createElement("div");
-      bloco.className = "numero";
+      bloco.className = indice === 0 ? "numero destaque" : "numero";
       const b = document.createElement("b");
       b.textContent = valor;
       const span = document.createElement("span");
@@ -110,7 +110,12 @@ function mostrarInteracoes(interacoes) {
       const tipo = document.createElement("span");
       tipo.className = `etiqueta ${i.tipo}`;
       tipo.textContent = TIPOS[i.tipo] ?? i.tipo;
-      const avaliacao = i.avaliacao_util === null ? "" : i.avaliacao_util ? "👍" : "👎";
+      let avaliacao = "";
+      if (i.avaliacao_util !== null) {
+        avaliacao = document.createElement("span");
+        avaliacao.className = `etiqueta ${i.avaliacao_util ? "avaliacao-sim" : "avaliacao-nao"}`;
+        avaliacao.textContent = i.avaliacao_util ? "Útil" : "Não útil";
+      }
       const celulas = [
         new Date(i.criado_em).toLocaleString("pt-BR"),
         PUBLICOS[i.publico] ?? "Não informado",
