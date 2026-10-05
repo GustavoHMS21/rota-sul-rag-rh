@@ -1,0 +1,52 @@
+# Integração contínua: a cada push na main e a cada pull request, roda o lint, a checagem de
+# formatação e os testes unitários numa máquina limpa. Os testes de integração (Postgres e Ollama)
+# ficam de fora: o marcador "integracao" é excluído por padrão no pyproject.toml.
+#
+# As actions de terceiros são fixadas pelo SHA do commit, e não pela tag: o dono de uma action pode
+# mover a tag para outro código, e o SHA não muda. O Dependabot (.github/dependabot.yml) abre PRs
+# para atualizar os SHAs.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Menor privilégio: o workflow só lê o repositório.
+permissions:
+  contents: read
+
+# Um push novo no mesmo branch cancela a execução anterior, que já ficou velha.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    name: Lint e testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # O token do GitHub não fica gravado no git local: nenhum passo seguinte precisa dele.
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          # Mesma versão do uv usada no desenvolvimento; o Python vem do .python-version.
+          version: "0.12.19"
+          enable-cache: true
+
+      - name: Instalar dependências (falha se o uv.lock estiver desatualizado)
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check src tests
+
+      - name: Formatação
+        run: uv run ruff format --check src tests
+
+      - name: Testes unitários
+        run: uv run pytest

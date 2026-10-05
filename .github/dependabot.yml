@@ -1,0 +1,14 @@
+# Atualiza os SHAs das actions usadas no CI (.github/workflows/ci.yml) uma vez por semana.
+# cooldown: só propõe uma versão publicada há pelo menos 7 dias. Uma versão comprometida costuma
+# ser descoberta e retirada nesse intervalo.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore

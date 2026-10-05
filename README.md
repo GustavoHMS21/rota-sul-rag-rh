@@ -1,5 +1,7 @@
 # Rota Sul HR Policy Assistant
 
+[![CI](https://github.com/GustavoHMS21/rota-sul-rag-rh/actions/workflows/ci.yml/badge.svg)](https://github.com/GustavoHMS21/rota-sul-rag-rh/actions/workflows/ci.yml)
+
 An assistant that answers employee questions about HR policies using only the company's official
 policy documents, and always cites the policy and section it used.
 
