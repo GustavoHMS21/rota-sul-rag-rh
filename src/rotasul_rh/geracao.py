@@ -18,6 +18,7 @@ import groq
 from rotasul_rh.busca import Resultado, buscar_contexto
 from rotasul_rh.config import Config, carregar_config
 from rotasul_rh.prompt import RESPOSTA_PADRAO, montar_mensagens
+from rotasul_rh.verificacao import numeros_sem_fonte, vazamento
 
 log = logging.getLogger(__name__)
 
@@ -63,18 +64,27 @@ def responder(pergunta: str, publico: str | None, config: Config, tentativas: in
     conteudo = _perguntar_ao_modelo(
         montar_mensagens(pergunta, publico, trechos), config, tentativas
     )
-    resposta = interpretar(conteudo, trechos)
+    resposta = interpretar(conteudo, trechos, pergunta)
     if resposta.motivo_da_troca:
-        # Pode ser só um modelo mal comportado, ou o começo de um problema: vale olhar.
+        # Pode ser só um modelo mal comportado, ou o começo de um problema: vale olhar. Vazamento
+        # tem evento próprio: é sinal de alguém tentando extrair as instruções.
+        motivo = resposta.motivo_da_troca
         log.warning(
             "resposta do modelo trocada pela padrão",
-            extra={"evento": "verificacao", "motivo": resposta.motivo_da_troca},
+            extra={
+                "evento": "vazamento" if motivo.startswith("vazamento") else "verificacao",
+                "motivo": motivo,
+            },
         )
     return resposta
 
 
-def interpretar(conteudo: str, trechos: list[Resultado]) -> Resposta:
-    """Lê o JSON do modelo e verifica tudo o que dá para verificar sem depender dele."""
+def interpretar(conteudo: str, trechos: list[Resultado], pergunta: str = "") -> Resposta:
+    """Lê o JSON do modelo e verifica tudo o que dá para verificar sem depender dele.
+
+    `pergunta` entra na conferência dos números: um número que o funcionário escreveu pode
+    aparecer na resposta ("com 10 faltas, você tem...").
+    """
     try:
         dados = json.loads(conteudo)
     except json.JSONDecodeError:
@@ -91,6 +101,10 @@ def interpretar(conteudo: str, trechos: list[Resultado]) -> Resposta:
     texto = dados.get("resposta")
     if not isinstance(texto, str) or not texto.strip():
         return _padrao(NAO_ENCONTRADO, trechos, "resposta vazia")
+    # Antes da fonte: uma resposta que repete as instruções é bloqueada mesmo com fonte válida.
+    motivo_do_vazamento = vazamento(texto)
+    if motivo_do_vazamento:
+        return _padrao(NAO_ENCONTRADO, trechos, motivo_do_vazamento)
 
     fontes = dados.get("fontes")
     if not isinstance(fontes, list) or not fontes:
@@ -102,6 +116,12 @@ def interpretar(conteudo: str, trechos: list[Resultado]) -> Resposta:
     inventadas = [i for i in ids if i not in por_id]
     if inventadas:
         return _padrao(NAO_ENCONTRADO, trechos, f"fonte fora dos trechos: {inventadas}")
+
+    # Uma seção pode ter um trecho por público ("POL-RH-003#6-administrativo"): todos contam.
+    citados = [t for t in trechos if f"{t.codigo}#{t.secao}" in ids]
+    soltos = numeros_sem_fonte(texto, citados, pergunta)
+    if soltos:
+        return _padrao(NAO_ENCONTRADO, trechos, f"número fora da fonte: {soltos}")
 
     return Resposta(
         tipo=RESPONDIDA,

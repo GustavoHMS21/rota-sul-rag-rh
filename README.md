@@ -82,6 +82,12 @@ A few details that matter:
   used. The code rejects any answer that cites a section it didn't receive, has no source or isn't
   valid JSON, and shows the fixed message instead. The citation shown to the employee is built by
   the code, not written by the model.
+- **Not trusting the prompt alone.** Every number in an answer (days, amounts, deadlines, in digits
+  or in words) must appear in the cited section or in the question itself, or the answer is
+  replaced. A random canary code hidden in the instructions, plus a check for any 8 words in a row
+  copied from them, blocks answers that leak the prompt. Tags that delimit the question are
+  stripped from the input, so a user can't close the question and write outside it. The model has
+  no tools and no access to the database or files, so the prompt text is the most it could leak.
 
 ## Results
 
