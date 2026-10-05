@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from rotasul_rh import registro
-from rotasul_rh.banco import conectar
+from rotasul_rh.banco import conectar, fechar_pools, preparar_banco
 from rotasul_rh.config import Config, carregar_config
 from rotasul_rh.embeddings import ErroEmbedding, aquecer_modelo
 from rotasul_rh.geracao import ErroGeracao, ErroLimite, responder
@@ -37,16 +37,22 @@ ESTATICOS = Path(__file__).parent / "static"
 
 @asynccontextmanager
 async def ciclo_de_vida(_app: FastAPI):
-    """Na subida, carrega o bge-m3 no Ollama em segundo plano: sem isso, a primeira pergunta
-    espera cerca de 2,5 s pelo carregamento do modelo. Em segundo plano para não atrasar a subida;
-    se o Ollama estiver fora, a primeira pergunta e o /api/saude mostram o problema."""
+    """Na subida, prepara o banco (esquema e pool) e carrega o bge-m3 no Ollama, em segundo plano
+    para não atrasar a subida. Sem isso, a primeira pergunta pagaria os dois custos (o modelo
+    sozinho leva cerca de 2,5 s). Se algo estiver fora, a primeira pergunta tenta de novo e o
+    /api/saude mostra o problema. Na saída, fecha as conexões do pool."""
     configurar_logs()
     log.info("servidor iniciado", extra={"evento": "inicio"})
     threading.Thread(target=_aquecer, daemon=True).start()
     yield
+    fechar_pools()
 
 
 def _aquecer() -> None:
+    try:
+        preparar_banco(obter_config())
+    except Exception:
+        log.warning("não consegui preparar o banco", exc_info=True)
     try:
         aquecer_modelo(obter_config())
     except Exception:

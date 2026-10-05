@@ -95,7 +95,7 @@ def test_configurar_duas_vezes_nao_duplica_e_grava_json(tmp_path, monkeypatch):
 class _GroqFalso:
     """Cliente do Groq de mentira: devolve sempre a mesma resposta válida."""
 
-    def __init__(self, api_key, max_retries):
+    def __init__(self):
         conteudo = json.dumps(
             {"tipo": "respondida", "resposta": "Sim, até um terço.", "fontes": ["POL-RH-003#8"]}
         )
@@ -125,7 +125,7 @@ def _config() -> Config:
 @pytest.fixture
 def cliente(monkeypatch):
     monkeypatch.setattr(geracao, "buscar_contexto", lambda *_: [TRECHO])
-    monkeypatch.setattr(geracao.groq, "Groq", _GroqFalso)
+    monkeypatch.setattr(geracao, "_cliente", lambda *_: _GroqFalso())
     monkeypatch.setattr(
         api.registro, "registrar", lambda *_: "29876b73-ae1d-4379-8cc1-8ba2c07899fb"
     )

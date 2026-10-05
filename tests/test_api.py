@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from rotasul_rh import api
 from rotasul_rh.busca import Resultado
 from rotasul_rh.config import Config
+from rotasul_rh.embeddings import ErroEmbedding
 from rotasul_rh.geracao import ErroGeracao, ErroLimite, Resposta
 
 CHAVE_RH = "chave-de-teste"
@@ -116,6 +117,7 @@ def test_entrada_invalida_e_recusada_antes_do_rag(cliente, chamadas, corpo):
     [
         (ErroLimite("limite"), 429),
         (ErroGeracao("groq fora"), 503),
+        (ErroEmbedding("Ollama passou do tempo limite (ReadTimeout)."), 503),
         (RuntimeError("banco fora"), 503),
     ],
 )

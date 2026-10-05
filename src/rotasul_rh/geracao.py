@@ -11,6 +11,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 import groq
 
@@ -32,6 +33,9 @@ _TEMPERATURA = 0
 # segunda ou terceira pergunta seguida recebia 429. Uma resposta maior que o teto sai com o JSON
 # cortado e vira a resposta padrão na verificação (falha segura).
 _MAX_TOKENS_DE_SAIDA = 512
+# Limite de cada tentativa. O Qwen responde em 1 a 2 s; sem limite explícito, uma chamada presa
+# segura a requisição pelo tempo padrão do SDK.
+_TIMEOUT_GROQ_SEGUNDOS = 20
 
 
 class ErroGeracao(RuntimeError):
@@ -125,12 +129,9 @@ def _perguntar_ao_modelo(mensagens: list[dict], config: Config, tentativas: int)
     if not config.groq_model:
         raise ErroGeracao("GROQ_MODEL não definido no .env")
 
-    # max_retries: o SDK repete sozinho em erros temporários, respeitando o tempo de espera que o
-    # Groq pede quando o limite de tokens por minuto é atingido.
-    cliente = groq.Groq(api_key=config.groq_api_key, max_retries=tentativas)
     inicio = time.perf_counter()
     try:
-        conclusao = cliente.chat.completions.create(
+        conclusao = _cliente(config.groq_api_key, tentativas).chat.completions.create(
             model=config.groq_model,
             messages=mensagens,
             temperature=_TEMPERATURA,
@@ -146,6 +147,11 @@ def _perguntar_ao_modelo(mensagens: list[dict], config: Config, tentativas: int)
     except groq.RateLimitError as erro:
         raise ErroLimite(
             "O limite de uso do Groq foi atingido. Tente de novo em alguns instantes."
+        ) from erro
+    # Vem antes do APIConnectionError, do qual é uma subclasse.
+    except groq.APITimeoutError as erro:
+        raise ErroGeracao(
+            f"O Groq passou de {_TIMEOUT_GROQ_SEGUNDOS} s sem responder, em todas as tentativas."
         ) from erro
     except groq.APIConnectionError as erro:
         raise ErroGeracao("Não consegui falar com o Groq. Confira a internet.") from erro
@@ -165,6 +171,18 @@ def _perguntar_ao_modelo(mensagens: list[dict], config: Config, tentativas: int)
         },
     )
     return conclusao.choices[0].message.content or ""
+
+
+@lru_cache(maxsize=4)
+def _cliente(api_key: str, tentativas: int) -> groq.Groq:
+    """Um cliente por chave, criado uma vez: as perguntas seguintes reaproveitam a conexão HTTPS
+    (o cliente é seguro para uso por várias threads).
+
+    max_retries: o SDK repete sozinho em erros temporários (conexão, tempo esgotado, 429 e 5xx),
+    com espera exponencial e respeitando o tempo que o Groq pede quando o limite de tokens por
+    minuto é atingido.
+    """
+    return groq.Groq(api_key=api_key, max_retries=tentativas, timeout=_TIMEOUT_GROQ_SEGUNDOS)
 
 
 if __name__ == "__main__":

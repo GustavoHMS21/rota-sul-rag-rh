@@ -1,11 +1,16 @@
 """Testes da verificação da resposta e do prompt. Não chamam o Groq."""
 
 import json
+from types import SimpleNamespace
 
+import groq
+import httpx
 import pytest
 
+from rotasul_rh import geracao
 from rotasul_rh.busca import Resultado
-from rotasul_rh.geracao import DADO_PESSOAL, NAO_ENCONTRADO, RESPONDIDA, interpretar
+from rotasul_rh.config import Config
+from rotasul_rh.geracao import DADO_PESSOAL, NAO_ENCONTRADO, RESPONDIDA, ErroGeracao, interpretar
 from rotasul_rh.prompt import RESPOSTA_PADRAO, montar_mensagens
 
 TODOS = ["administrativo", "motorista", "operacao"]
@@ -90,3 +95,40 @@ def test_prompt_identifica_publico_e_trechos():
     )
     assert "(vale para: operacao)" in usuario["content"]
     assert usuario["content"].endswith("<pergunta>Trabalhei no sábado?</pergunta>")
+
+
+CONFIG = Config(
+    postgres_host="127.0.0.1",
+    postgres_port=5432,
+    postgres_db="x",
+    postgres_user="x",
+    postgres_password="x",
+    ollama_base_url="http://127.0.0.1:9",
+    embedding_model="bge-m3",
+    groq_api_key="chave-de-teste",
+    groq_model="qwen/qwen3.8-27b",
+)
+
+
+def test_cliente_do_groq_e_criado_uma_vez_com_limite_de_tempo():
+    """Criar o cliente não chama a rede; reaproveitá-lo mantém a conexão HTTPS aberta."""
+    geracao._cliente.cache_clear()
+    try:
+        cliente = geracao._cliente("chave-de-teste", 2)
+
+        assert geracao._cliente("chave-de-teste", 2) is cliente
+        assert cliente.timeout == 20
+        assert cliente.max_retries == 2
+    finally:
+        geracao._cliente.cache_clear()
+
+
+def test_groq_sem_responder_vira_erro_de_geracao(monkeypatch):
+    def criar(**_):
+        raise groq.APITimeoutError(request=httpx.Request("POST", "https://api.groq.com"))
+
+    cliente_lento = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=criar)))
+    monkeypatch.setattr(geracao, "_cliente", lambda *_: cliente_lento)
+
+    with pytest.raises(ErroGeracao, match="passou de 20 s"):
+        geracao._perguntar_ao_modelo([], CONFIG, tentativas=2)
