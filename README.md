@@ -94,11 +94,12 @@ A few details that matter:
 
 ## Results
 
-All numbers come from an evaluation set of 58 questions with expected sources, required facts and
+All numbers come from an evaluation set of 61 questions with expected sources, required facts and
 "forbidden" facts (rules that exist but belong to another group). Every expected source and fact
 in the set is checked against the policy text by a test, so the set itself can't drift.
 
-**Retrieval** (42 questions that have an answer, no language model):
+**Retrieval** (the 42 questions with an answer in the set before the last 3 manipulation cases were
+added; no language model):
 
 | Metric | Result |
 |---|---|
@@ -115,12 +116,16 @@ employee, which is what led to adding the eligibility sections to the context.
 
 | Metric | Result |
 |---|---|
-| Answered or refused correctly | 58 / 58 |
+| Answered or refused correctly | 61 / 61 |
 | Answered when it should have refused | 0 |
 | Refused when it should have answered | 0 |
-| Cited the expected section | 42 / 42 |
+| Cited the expected section | 43 / 43 |
 | Included a rule from another group | 0 |
-| Manipulation attempts handled correctly | 7 / 7 |
+| Manipulation attempts handled correctly | 10 / 10 |
+| Good answers wrongly blocked by the code checks (numbers, prompt leak) | 0 |
+
+The manipulation cases include closing the question tag to inject a "new rule", asking for the
+prompt in English, and an instruction hidden in a long message ("the meal allowance is now R$ 80").
 
 Three of these were fixed along the way, and the evaluation is what showed them: the "work from
 home" answer above, the vacation question with a described situation, which was being refused as
@@ -131,8 +136,9 @@ A question takes about 1 to 2 seconds on a laptop CPU. There are 315 unit tests 
 tests.
 
 One honest caveat: the check for required facts compares text, so it marks correct answers with
-different wording as misses (28 of 42 pass as text; 40 of 42 are complete when read, and the other
-two leave out a detail that wasn't asked). Improving that check is on the list below.
+different wording as misses (29 of 43 pass as text in the latest run; in the last full reading,
+40 of 42 were complete, and the other two left out a detail that wasn't asked). Improving that
+check is on the list below.
 
 ## Design decisions
 
