@@ -1,6 +1,6 @@
 # ADR-0001: Execução apenas local
 
-- **Status:** aceito
+- **Status:** substituído por ADR-0016
 - **Data:** 2026-09-26
 - **Responsável pela decisão:** Gustavo
 

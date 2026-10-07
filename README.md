@@ -149,7 +149,7 @@ numbers behind it (written in Portuguese).
 
 | # | Decision |
 |---|---|
-| [0001](docs/adr/0001-execucao-local.md) | Run locally only for now |
+| [0001](docs/adr/0001-execucao-local.md) | Run locally only for now (replaced by 0016) |
 | [0002](docs/adr/0002-interface-fastapi-html.md) | FastAPI plus a plain HTML page, no front-end framework |
 | [0003](docs/adr/0003-leitor-proprio-de-documentos.md) | Custom document reader (python-docx and pdfplumber), after pypdf broke the PDF tables |
 | [0004](docs/adr/0004-chunking-por-secao-e-publico.md) | One chunk per section, 512-token ceiling, group tags only from explicit text |
@@ -160,6 +160,7 @@ numbers behind it (written in Portuguese).
 | [0009](docs/adr/0009-autenticacao-e-area-do-rh.md) | No login for employees, access key for the HR page |
 | [0010](docs/adr/0010-protecao-contra-manipulacao.md) | Prompt injection cases in the evaluation set |
 | [0011](docs/adr/0011-logs-e-observabilidade.md) | Structured logs with a per-request code, never the question text |
+| [0016](docs/adr/0016-producao-na-oracle-cloud.md) | Production on Oracle Cloud Always Free (ARM), behind a reverse proxy that alone may pass the real client IP |
 
 ## Stack
 
