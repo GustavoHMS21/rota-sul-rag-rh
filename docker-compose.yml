@@ -10,21 +10,34 @@
 #
 # Usuário, senha, banco, porta e a chave do Groq vêm do arquivo .env (copie de .env.example).
 
+# Logs dos contêineres guardados pelo Docker, com rotação: até 5 arquivos de 10 MB por serviço.
+# Sem isso, o arquivo de log de cada contêiner cresce até encher o disco do servidor.
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 x-app: &app
   build: .
   image: rotasul-assistente-rh:local
   env_file: .env
+  logging: *logs
   environment:
     # Dentro da rede do Docker, cada serviço é encontrado pelo nome.
     POSTGRES_HOST: postgres
     POSTGRES_PORT: "5432"
     OLLAMA_BASE_URL: http://ollama:11434
+    # Único endereço de onde o uvicorn aceita o X-Forwarded-For (o IP real de quem pergunta): o
+    # IP fixo do proxy reverso (Caddy, ADR-0016). De qualquer outro, o cabeçalho é ignorado.
+    FORWARDED_ALLOW_IPS: 172.28.0.10
 
 services:
   postgres:
     image: pgvector/pgvector:pg17
     container_name: rotasul-postgres
     restart: unless-stopped
+    logging: *logs
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
@@ -45,6 +58,7 @@ services:
     image: ollama/ollama:latest
     profiles: [completo]
     restart: unless-stopped
+    logging: *logs
     volumes:
       - ollama_modelos:/root/.ollama
     healthcheck:
@@ -89,3 +103,11 @@ services:
 volumes:
   postgres_dados:
   ollama_modelos:
+
+# Faixa fixa na rede interna, para o proxy reverso (P3) ter um IP conhecido (172.28.0.10) e a app
+# confiar no X-Forwarded-For só dele.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24

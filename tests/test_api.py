@@ -6,6 +6,7 @@ from dataclasses import replace
 
 import pytest
 from fastapi.testclient import TestClient
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from rotasul_rh import api
 from rotasul_rh.busca import Resultado
@@ -334,3 +335,55 @@ def test_chave_do_rh_errada_cinco_vezes_bloqueia_ate_a_certa(cliente, monkeypatc
 
     assert certa.status_code == 429
     assert int(certa.headers["Retry-After"]) > 0
+
+
+# ---------------------------------------------------------------- IP real atrás do proxy
+
+
+def _por_tras_do(proxies_confiaveis: str) -> TestClient:
+    """A app atrás do mesmo middleware que o uvicorn usa em produção (FORWARDED_ALLOW_IPS).
+    O cliente de testes se conecta com o endereço "testclient"."""
+    return TestClient(ProxyHeadersMiddleware(api.app, trusted_hosts=proxies_confiaveis))
+
+
+def _perguntar_de(cliente: TestClient, x_forwarded_for: str) -> int:
+    corpo = {"pergunta": "Posso vender férias?"}
+    cabecalhos = {"X-Forwarded-For": x_forwarded_for}
+    return cliente.post("/api/perguntas", json=corpo, headers=cabecalhos).status_code
+
+
+@pytest.fixture
+def uma_pergunta_por_minuto(cliente, monkeypatch):
+    _contar_respostas(monkeypatch)
+    api.app.dependency_overrides[api.obter_config] = lambda: replace(
+        _config(), limite_perguntas_por_minuto=1
+    )
+
+
+@pytest.mark.usefixtures("uma_pergunta_por_minuto")
+def test_atras_do_proxy_cada_funcionario_tem_o_seu_limite():
+    """Sem o IP real, todos seriam o IP do proxy e dividiriam um limite só (ADR-0016)."""
+    proxy = _por_tras_do("testclient")
+
+    assert _perguntar_de(proxy, "203.0.113.1") == 200
+    assert _perguntar_de(proxy, "203.0.113.1") == 429
+    assert _perguntar_de(proxy, "203.0.113.2") == 200  # outra pessoa, outro limite
+
+
+@pytest.mark.usefixtures("uma_pergunta_por_minuto")
+def test_de_fora_do_proxy_o_cabecalho_falsificado_e_ignorado():
+    """Quem fala direto com a app não troca de "IP" mudando o X-Forwarded-For."""
+    direto = _por_tras_do("172.28.0.10")  # só o Caddy é confiável; o cliente de testes não
+
+    assert _perguntar_de(direto, "198.51.100.1") == 200
+    assert _perguntar_de(direto, "198.51.100.2") == 429
+
+
+@pytest.mark.usefixtures("uma_pergunta_por_minuto")
+def test_ip_falso_a_esquerda_do_cabecalho_nao_engana():
+    """O Caddy acrescenta o IP real no fim do X-Forwarded-For que o atacante enviou. O uvicorn lê
+    da direita para a esquerda, então o IP inventado à esquerda não conta."""
+    proxy = _por_tras_do("testclient")
+
+    assert _perguntar_de(proxy, "203.0.113.1") == 200
+    assert _perguntar_de(proxy, "10.9.9.9, 203.0.113.1") == 429

@@ -50,3 +50,37 @@ jobs:
 
       - name: Testes unitários
         run: uv run pytest
+
+  # O servidor de produção (Oracle Cloud Always Free, ADR-0016) é ARM. Este job constrói a imagem
+  # numa máquina ARM do GitHub (gratuita para repositório público) e confere que a API sobe, para
+  # um problema de arquitetura aparecer aqui, e não no servidor. Não publica nada (fica para a P4).
+  imagem-arm:
+    name: Imagem ARM (produção)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Construir a imagem
+        run: docker build --tag rotasul-assistente-rh:ci .
+
+      - name: Subir a API e conferir que ela responde
+        # Sem banco, Ollama e Groq, a API sobe e o /api/saude responde 503 {"status": "falha"}.
+        # As variáveis do Postgres só existem porque a configuração exige que estejam definidas.
+        run: |
+          docker run --detach --name app --publish 8000:8000 \
+            --env POSTGRES_DB=ci --env POSTGRES_USER=ci --env POSTGRES_PASSWORD=ci \
+            rotasul-assistente-rh:ci
+          codigo=000
+          for _ in $(seq 1 30); do
+            codigo=$(curl --silent --output resposta.json --write-out '%{http_code}' \
+              http://127.0.0.1:8000/api/saude || true)
+            [ "$codigo" != "000" ] && break
+            sleep 1
+          done
+          docker logs app
+          cat resposta.json
+          test "$codigo" = "503"
+          grep --quiet '"status":"falha"' resposta.json

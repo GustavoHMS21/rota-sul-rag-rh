@@ -1,8 +1,13 @@
 """Configuração dos logs (ADR-0011).
 
-- Terminal: texto legível, com data, hora e o código da requisição.
-- Arquivo `logs/app.log`: uma linha JSON por evento, trocado à meia-noite e apagado depois de
+Em desenvolvimento (AMBIENTE=desenvolvimento):
+- terminal: texto legível, com data, hora e o código da requisição;
+- arquivo `logs/app.log`: uma linha JSON por evento, trocado à meia-noite e apagado depois de
   LOG_DIAS dias (padrão 14).
+
+Em produção (ADR-0016): só JSON na saída padrão. Num contêiner, um arquivo interno se perderia a
+cada deploy; o Docker guarda a saída padrão, com rotação definida no docker-compose.yml.
+
 - Cada requisição ganha um código curto (`req`) que aparece em todas as suas linhas de log, no
   cabeçalho X-Request-ID e na mensagem de erro mostrada ao funcionário.
 
@@ -14,11 +19,14 @@ liga a linha de log ao registro mascarado no banco (ADR-0008).
 import json
 import logging
 import os
+import sys
 import uuid
 from contextvars import ContextVar
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
+
+from rotasul_rh.config import em_desenvolvimento
 
 PASTA_LOGS = Path(__file__).parents[2] / "logs"
 
@@ -89,8 +97,13 @@ class FormatoTexto(logging.Formatter):
         return linha
 
 
-def configurar_logs(pasta: Path = PASTA_LOGS) -> None:
-    """Liga os logs no terminal e no arquivo. Pode ser chamada de novo (reload) sem duplicar."""
+def configurar_logs(pasta: Path = PASTA_LOGS, producao: bool | None = None) -> None:
+    """Liga os logs. Pode ser chamada de novo (reload) sem duplicar.
+
+    `producao`: None decide pelo AMBIENTE do .env; os testes passam True ou False.
+    """
+    if producao is None:
+        producao = not em_desenvolvimento()
     nivel = os.getenv("LOG_NIVEL", "INFO").upper()
     dias = int(os.getenv("LOG_DIAS", "14"))
 
@@ -100,16 +113,22 @@ def configurar_logs(pasta: Path = PASTA_LOGS) -> None:
         handler.close()
     raiz.setLevel(nivel)
 
-    terminal = logging.StreamHandler()
-    terminal.setFormatter(FormatoTexto())
+    if producao:
+        # Uma linha JSON por evento na saída padrão, que é o que o Docker coleta.
+        saida = logging.StreamHandler(sys.stdout)
+        saida.setFormatter(FormatoJson())
+        handlers = [saida]
+    else:
+        terminal = logging.StreamHandler()
+        terminal.setFormatter(FormatoTexto())
+        pasta.mkdir(parents=True, exist_ok=True)
+        arquivo = TimedRotatingFileHandler(
+            pasta / "app.log", when="midnight", backupCount=dias, encoding="utf-8"
+        )
+        arquivo.setFormatter(FormatoJson())
+        handlers = [terminal, arquivo]
 
-    pasta.mkdir(parents=True, exist_ok=True)
-    arquivo = TimedRotatingFileHandler(
-        pasta / "app.log", when="midnight", backupCount=dias, encoding="utf-8"
-    )
-    arquivo.setFormatter(FormatoJson())
-
-    for handler in (terminal, arquivo):
+    for handler in handlers:
         handler._rotasul = True
         handler.addFilter(_FiltroDeRequisicao())
         # No handler, e não no logger "groq": filtros de logger não valem para os loggers filhos

@@ -68,13 +68,33 @@ def test_retry_do_groq_vira_aviso():
     assert registro.levelname == "WARNING"
 
 
+def test_em_producao_so_json_na_saida_padrao_e_nenhum_arquivo(tmp_path, monkeypatch, capsys):
+    """Num contêiner, um arquivo interno se perderia a cada deploy (ADR-0016)."""
+    monkeypatch.setenv("LOG_NIVEL", "INFO")
+    raiz = logging.getLogger()
+    antes = list(raiz.handlers)
+    try:
+        configurar_logs(tmp_path, producao=True)
+        nossos = [h for h in raiz.handlers if getattr(h, "_rotasul", False)]
+        assert len(nossos) == 1
+
+        logging.getLogger("rotasul_rh.teste").info("na saída", extra={"evento": "teste"})
+        linha = capsys.readouterr().out.strip().splitlines()[-1]
+        assert json.loads(linha)["evento"] == "teste"
+        assert list(tmp_path.iterdir()) == []
+    finally:
+        for handler in [h for h in raiz.handlers if h not in antes]:
+            raiz.removeHandler(handler)
+            handler.close()
+
+
 def test_configurar_duas_vezes_nao_duplica_e_grava_json(tmp_path, monkeypatch):
     monkeypatch.setenv("LOG_NIVEL", "INFO")
     raiz = logging.getLogger()
     antes = list(raiz.handlers)
     try:
-        configurar_logs(tmp_path)
-        configurar_logs(tmp_path)  # o --reload chama de novo
+        configurar_logs(tmp_path, producao=False)
+        configurar_logs(tmp_path, producao=False)  # o --reload chama de novo
         nossos = [h for h in raiz.handlers if getattr(h, "_rotasul", False)]
         assert len(nossos) == 2  # terminal e arquivo, uma vez só
 

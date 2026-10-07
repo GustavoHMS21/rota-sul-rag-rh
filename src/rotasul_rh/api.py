@@ -9,7 +9,6 @@ http://127.0.0.1:8000/docs (documentação automática, só com AMBIENTE=desenvo
 
 import logging
 import math
-import os
 import secrets
 import threading
 import time
@@ -21,7 +20,6 @@ from pathlib import Path
 from typing import Annotated, Literal, NoReturn
 
 import httpx
-from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,7 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from rotasul_rh import registro
 from rotasul_rh.banco import conectar, fechar_pools, preparar_banco
-from rotasul_rh.config import Config, carregar_config
+from rotasul_rh.config import Config, carregar_config, em_desenvolvimento
 from rotasul_rh.embeddings import ErroEmbedding, aquecer_modelo
 from rotasul_rh.geracao import ErroGeracao, ErroLimite, responder
 from rotasul_rh.idempotencia import ChaveEmAndamento, ChaveReutilizada, Idempotencia
@@ -67,8 +65,7 @@ def _aquecer() -> None:
 # A documentação automática (/docs, /redoc, /openapi.json) descreve a API inteira para quem a
 # abrir. Segura por padrão (ADR-0015): só existe com AMBIENTE=desenvolvimento no .env. É lida na
 # importação porque o FastAPI decide na criação do app se essas rotas existem.
-load_dotenv()
-_DESENVOLVIMENTO = os.getenv("AMBIENTE", "").strip().lower() == "desenvolvimento"
+_DESENVOLVIMENTO = em_desenvolvimento()
 
 app = FastAPI(
     title="Assistente de Políticas de RH: Rota Sul Logística",
@@ -306,11 +303,14 @@ def _prazo(segundos: float) -> str:
 
 
 def _ip(request: Request) -> str:
-    """IP de quem está conectado.
+    """IP de quem fez a requisição, usado no limite de perguntas e no bloqueio da chave do RH.
 
-    O X-Forwarded-For é ignorado de propósito: sem um proxy confiável na frente, qualquer um
-    preenche esse cabeçalho e troca de "IP" a cada requisição para escapar do limite. Num deploy
-    atrás de proxy, o cabeçalho só deve ser lido quando a conexão vier do próprio proxy.
+    Atrás do proxy (Caddy, em produção), a conexão vem sempre do proxy, e o IP real chega no
+    X-Forwarded-For. Quem lê o cabeçalho é o uvicorn, antes da app: ele só confia no cabeçalho
+    quando a conexão vem de um endereço listado em FORWARDED_ALLOW_IPS (o IP fixo do Caddy, no
+    docker-compose.yml), e pega o último IP que não é de proxy, que o atacante não controla. De
+    qualquer outro endereço, o cabeçalho é ignorado: senão, qualquer um trocaria de "IP" a cada
+    requisição para escapar do limite (ADR-0013, ADR-0016).
     """
     return request.client.host if request.client else "desconhecido"
 

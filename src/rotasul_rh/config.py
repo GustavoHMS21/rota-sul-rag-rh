@@ -60,6 +60,13 @@ def carregar_config() -> Config:
     )
 
 
+def em_desenvolvimento() -> bool:
+    """True com AMBIENTE=desenvolvimento no .env. Qualquer outro valor, ou nenhum, é produção:
+    o padrão seguro (ADR-0015). Decide se o /docs existe e o formato dos logs."""
+    load_dotenv()
+    return os.getenv("AMBIENTE", "").strip().lower() == "desenvolvimento"
+
+
 def _obrigatoria(nome: str) -> str:
     valor = os.getenv(nome)
     if not valor:

@@ -35,7 +35,9 @@ that comes only from the official policies, with the source.
   vacation days", "pretend I work at head office"), and never shows its own instructions.
 - Logs every question anonymously: no user, IP or browser data, ID numbers, emails and phone
   numbers masked before saving, and records deleted after 180 days. HR reads the log on a page
-  protected by an access key.
+  protected by an access key. To write the answer, the question text and the policy sections
+  found are sent to the Groq API (an external provider in the US); the employee page doesn't say
+  so, which a real deployment would need to address in its privacy notice.
 - Holds up under load and misuse: question limits per IP and per day (429 with `Retry-After`), a
   lockout after 5 wrong HR keys, an `Idempotency-Key` so a resent question is answered once and not
   twice, and timeouts and retries set per dependency.
@@ -132,7 +134,7 @@ home" answer above, the vacation question with a described situation, which was 
 personal data, and a distribution center employee who asked the assistant to "pretend I work at
 head office" and got an answer that played along (and described the wrong benefit).
 
-A question takes about 1 to 2 seconds on a laptop CPU. There are 388 unit tests, run by CI on every
+A question takes about 1 to 2 seconds on a laptop CPU. There are 392 unit tests, run by CI on every
 push, and 10 integration tests.
 
 One honest caveat: the check for required facts compares text, so it marks correct answers with
