@@ -160,6 +160,10 @@ numbers behind it (written in Portuguese).
 | [0009](docs/adr/0009-autenticacao-e-area-do-rh.md) | No login for employees, access key for the HR page |
 | [0010](docs/adr/0010-protecao-contra-manipulacao.md) | Prompt injection cases in the evaluation set |
 | [0011](docs/adr/0011-logs-e-observabilidade.md) | Structured logs with a per-request code, never the question text |
+| [0012](docs/adr/0012-resiliencia-timeouts-retry-e-pool.md) | Timeouts per use, retry only on temporary Ollama failures, schema created once, connection pool |
+| [0013](docs/adr/0013-limite-de-requisicoes-e-idempotencia.md) | Sliding-window limits per IP and per day, HR key lockout, `Idempotency-Key` on questions |
+| [0014](docs/adr/0014-verificacao-da-resposta-contra-manipulacao.md) | Code checks the answer: numbers must be in the cited section, canary and overlap against prompt leaks |
+| [0015](docs/adr/0015-padroes-seguros-para-producao.md) | Security headers, `/docs` only in development, health check that reveals nothing, non-root container |
 | [0016](docs/adr/0016-producao-na-oracle-cloud.md) | Production on Oracle Cloud Always Free (ARM), behind a reverse proxy that alone may pass the real client IP |
 
 ## Stack
