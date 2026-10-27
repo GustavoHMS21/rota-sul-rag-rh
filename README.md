@@ -5,6 +5,8 @@
 An assistant that answers employee questions about HR policies using only the company's official
 policy documents, and always cites the policy and section it used.
 
+Built in 12 days, from September 26 to October 7, 2026 (commit history).
+
 > Rota Sul Logística is a fictional company. The case, the people and the policies were written for
 > this portfolio project.
 
